@@ -18,8 +18,7 @@ from torch._functorch.aot_autograd import (
 )
 
 from torch_mlir import fx
-from torch_mlir.compiler_utils import run_pipeline_with_repro_report
-
+from torch_mlir.compiler_utils import OutputType, run_pipeline_with_repro_report
 
 def run(f):
     print(f"{f.__name__}")
@@ -27,6 +26,22 @@ def run(f):
     f()
     print()
 
+@run
+def test_matmul_relu():
+    class Basic(nn.Module):
+        def __init__(self):
+            super().__init__()
+
+        def forward(self, x):
+            x = torch.matmul(x, torch.randn(4, 4)) + torch.randn(1, 4)
+            x = torch.relu(x)
+            return x 
+
+    model = Basic().cpu()
+    model = torch.fx.symbolic_trace(model)
+    m = fx.export_and_import(model, torch.randn(4, 4), output_type=OutputType.LINALG_ON_TENSORS, enable_graph_printing=True, enable_ir_printing=True)    
+    print(m)
+    exit(0)
 
 @run
 # CHECK-LABEL: test_import_frozen_exported_program
