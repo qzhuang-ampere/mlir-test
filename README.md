@@ -8,7 +8,7 @@ Use venv to build in vscode and cmake
 1.	Python -m venv mlir_venv
 2.	Command palette: Python select interpreter
 3.	Command palette: Cmake Edit local user kits
-4.	Add this "environmentSetupScript": "/home/qzhuang/code/mlir_venv/bin/activate"
+4.	Add this "environmentSetupScript": "$HOME/code/mlir_venv/bin/activate"
 5.	Command palette: Cmake select a kit
 6.	Command palette: Cmake delete cache and rebuild
 
@@ -19,7 +19,7 @@ Torch-mlir: 7190726358ae861ab4c7d23e11e7bf2720421c0b
 Build setting.json:
 LLVM:
 {
-    "cmake.sourceDirectory": "/home/qzhuang/code/llvm-project/llvm",
+    "cmake.sourceDirectory": "$HOME/code/llvm-project/llvm",
     "cmake.configureArgs": [
         "-DLLVM_ENABLE_PROJECTS=mlir;clang;lld",
         "-DLLVM_BUILD_EXAMPLES=ON",
@@ -42,10 +42,10 @@ Torch-MLIR:
         "-DPython_FIND_VIRTUALENV=ONLY",
         "-DMLIR_ENABLE_BINDINGS_PYTHON=ON",
         "-DLLVM_TARGETS_TO_BUILD=host",
-        "-DMLIR_DIR=/home/qzhuang/code/llvm-project/build/${buildType}/lib/cmake/mlir/",
-        "-DLLVM_DIR=/home/qzhuang/code/llvm-project/build/${buildType}/lib/cmake/llvm/",
-        "-DCMAKE_C_COMPILER=/home/qzhuang/code/llvm-project/build/Release/bin/clang",
-        "-DCMAKE_CXX_COMPILER=/home/qzhuang/code/llvm-project/build/Release/bin/clang++",
+        "-DMLIR_DIR=$HOME/code/llvm-project/build/${buildType}/lib/cmake/mlir/",
+        "-DLLVM_DIR=$HOME/code/llvm-project/build/${buildType}/lib/cmake/llvm/",
+        "-DCMAKE_C_COMPILER=$HOME/code/llvm-project/build/Release/bin/clang",
+        "-DCMAKE_CXX_COMPILER=$HOME/code/llvm-project/build/Release/bin/clang++",
         "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
         "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
         "-DCMAKE_LINKER_TYPE=LLD"
@@ -57,10 +57,10 @@ Torch-MLIR:
 MLIR-TEST:
 {
     "cmake.configureArgs": [
-        "-DMLIR_DIR=/home/qzhuang/code/llvm-project/build/${buildType}/lib/cmake/mlir/",
-        "-DLLVM_DIR=/home/qzhuang/code/llvm-project/build/${buildType}/lib/cmake/llvm/",
-        "-DCMAKE_C_COMPILER=/home/qzhuang/code/llvm-project/build/Release/bin/clang",
-        "-DCMAKE_CXX_COMPILER=/home/qzhuang/code/llvm-project/build/Release/bin/clang++",
+        "-DMLIR_DIR=$HOME/code/llvm-project/build/${buildType}/lib/cmake/mlir/",
+        "-DLLVM_DIR=$HOME/code/llvm-project/build/${buildType}/lib/cmake/llvm/",
+        "-DCMAKE_C_COMPILER=$HOME/code/llvm-project/build/Release/bin/clang",
+        "-DCMAKE_CXX_COMPILER=$HOME/code/llvm-project/build/Release/bin/clang++",
         "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
         "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
         "-DCMAKE_LINKER_TYPE=LLD"     
@@ -73,12 +73,12 @@ MLIR-TEST:
 
 
 Test env:
-export PYTHONPATH=/home/qzhuang/code/torch-mlir/build/Debug/python_packages/torch_mlir:/home/qzhuang/code/torch-mlir/test/python/fx_importer:$PYTHON_PATH
+export PYTHONPATH=$HOME/code/torch-mlir/build/Debug/python_packages/torch_mlir:$HOME/code/torch-mlir/test/python/fx_importer:$PYTHON_PATH
 python test/python/fx_importer/basic_test.py
 
 
-export PYTHONPATH=/home/qzhuang/code/torch-mlir/build/Release/python_packages/torch_mlir:home/qzhuang/code/torch-mlir/test/python/fx_importer:$PYTHON_PATH
+export PYTHONPATH=$HOME/code/torch-mlir/build/Release/python_packages/torch_mlir:$HOME/code/torch-mlir/test/python/fx_importer:$PYTHON_PATH
 python test/python/fx_importer/basic_test.py
 
 
-export PATH=/home/qzhuang/code/llvm-project/build/Debug/bin:$PATH 
+export PATH=$HOME/code/llvm-project/build/Debug/bin:$PATH 
