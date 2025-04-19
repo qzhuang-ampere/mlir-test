@@ -73,11 +73,11 @@ MLIR-TEST:
 
 
 Test env:
-export PYTHONPATH=`pwd`/build/Debug/python_packages/torch_mlir:`pwd`/test/python/fx_importer:$PYTHON_PATH
+export PYTHONPATH=/home/qzhuang/code/torch-mlir/build/Debug/python_packages/torch_mlir:/home/qzhuang/code/torch-mlir/test/python/fx_importer:$PYTHON_PATH
 python test/python/fx_importer/basic_test.py
 
 
-export PYTHONPATH=`pwd`/build/Release/python_packages/torch_mlir:`pwd`/test/python/fx_importer:$PYTHON_PATH
+export PYTHONPATH=/home/qzhuang/code/torch-mlir/build/Release/python_packages/torch_mlir:home/qzhuang/code/torch-mlir/test/python/fx_importer:$PYTHON_PATH
 python test/python/fx_importer/basic_test.py
 
 
