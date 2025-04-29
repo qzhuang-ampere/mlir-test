@@ -23,7 +23,7 @@ module {
       linalg.yield %6 : f32
     } -> tensor<4096x4096xf32>
     return %4 : tensor<4096x4096xf32>
-  } 
+  }
 
   module attributes {transform.with_named_sequence} {
     transform.named_sequence @__transform_main(%arg1: !transform.any_op {transform.readonly}) {
@@ -35,12 +35,12 @@ module {
         -> (!transform.any_op, !transform.any_op)
 
       %31 = transform.structured.match ops{["linalg.generic"]} in %1 : (!transform.any_op) -> !transform.any_op
-      transform.print %31 : !transform.any_op  
+      transform.print %31 : !transform.any_op
       %32 = transform.structured.match ops{["linalg.generic"]} in %2 : (!transform.any_op) -> !transform.any_op
-      transform.print %32 : !transform.any_op  
+      transform.print %32 : !transform.any_op
 
-      transform.structured.vectorize %31 vector_sizes [1, 64] : !transform.any_op  
-      transform.structured.vectorize %31 vector_sizes [1, 64] : !transform.any_op  
+      transform.structured.vectorize %31 vector_sizes [1, 64] : !transform.any_op
+      transform.structured.vectorize %32 vector_sizes [1, 64] : !transform.any_op
       transform.yield
     }
   }
