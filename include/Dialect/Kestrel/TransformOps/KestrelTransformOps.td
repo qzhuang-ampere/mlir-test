@@ -14,8 +14,8 @@ include "mlir/Interfaces/SideEffectInterfaces.td"
 //
 //===----------------------------------------------------------------------===//
 def OutlineWithUniqName : Op<Transform_Dialect, "kestrel.loop.outline_with_uniq_name",
-    [DeclareOpInterfaceMethods<TransformOpInterface>,
-     DeclareOpInterfaceMethods<MemoryEffectsOpInterface>]> {
+    [FunctionalStyleTransformOpTrait, MemoryEffectsOpInterface,
+     DeclareOpInterfaceMethods<TransformOpInterface>]> {
   let summary = "Generates a unique function name for a outlined function call";
   let description = [{
     Generates a unique function name for a outlined function call.
