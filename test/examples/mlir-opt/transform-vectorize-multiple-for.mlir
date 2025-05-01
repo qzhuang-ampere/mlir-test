@@ -53,9 +53,14 @@ module {
 
         //transform.print %tiled_op1 : !transform.any_op
 
+        %func, %call = transform.kestrel.loop.outline_with_uniq_name %forall_op {func_name = "func"} : (!transform.any_op) -> (!transform.any_op, !transform.op<"func.call">)
+        //%func, %call = transform.loop.outline %forall_op {func_name = } : (!transform.any_op) -> (!transform.any_op, !transform.op<"func.call">)
+
         // Fixme: How come the vector_sizes [1, 64] is not working?
-        // transform.structured.vectorize %31 vector_sizes [1, 64] : !transform.any_op
-        transform.structured.vectorize %tiled_op1 : !transform.any_op
+        // transform.structured.vectorize %tiled_op1 vector_sizes [1, 64] : !transform.any_op
+        //transform.structured.vectorize %tiled_op1 : !transform.any_op
+        %veced_tile = transform.structured.vectorize_children_and_apply_patterns %func : (!transform.any_op) -> !transform.any_op
+        //transform.structured.vectorize %func: !transform.any_op
       }
 
       transform.yield
