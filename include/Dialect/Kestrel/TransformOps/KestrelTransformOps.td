@@ -1,4 +1,4 @@
-//===- UniqueFuncNameExt.td - Transform dialect extension -----------------===//
+//===- KestrelTransformOps.td - Transform dialect extension -----------------===//
 // This file defines a dialect extension for the Transform dialect
 //===----------------------------------------------------------------------===//
 
@@ -11,7 +11,8 @@ include "mlir/IR/OpBase.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
 ///===----------------------------------------------------------------------===//
-//
+// Kestrel Transform dialect extension
+// Outline the handle to a function with a unique name
 //===----------------------------------------------------------------------===//
 def OutlineWithUniqName : Op<Transform_Dialect, "kestrel.loop.outline_with_uniq_name",
     [FunctionalStyleTransformOpTrait, MemoryEffectsOpInterface,
