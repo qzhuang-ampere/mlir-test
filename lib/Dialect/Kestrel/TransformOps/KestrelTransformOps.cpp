@@ -1,4 +1,4 @@
-//===- UniqueFuncNameExt.td - Transform dialect extension -----------------===//
+//===- KestrealTransformOps.cpp - Transform dialect extension -----------------===//
 // This file defines a dialect extension for the Transform dialect
 //===----------------------------------------------------------------------===//
 

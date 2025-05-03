@@ -1,5 +1,5 @@
-//===- UniqueFuncNameExt.td - Transform dialect extension -----------------===//
-// This file defines a dialect extension for the Transform dialect
+//===- KestrelTransformOps.h - Transform dialect extension -----------------===//
+// This file defines a dialect extension header file for the Transform dialect
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Bytecode/BytecodeOpInterface.h"
