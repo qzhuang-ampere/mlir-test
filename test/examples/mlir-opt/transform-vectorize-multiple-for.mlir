@@ -53,16 +53,24 @@ module {
 
         //transform.print %tiled_op1 : !transform.any_op
 
-        %func, %call = transform.kestrel.loop.outline_with_uniq_name %forall_op {func_name = "func"} : (!transform.any_op) -> (!transform.any_op, !transform.op<"func.call">)
+        %func, %call = transform.kestrel.loop.outline_with_uniq_name %forall_op {func_name = "func_Connor"} : (!transform.any_op) -> (!transform.any_op, !transform.op<"func.call">)
         //%func, %call = transform.loop.outline %forall_op {func_name = } : (!transform.any_op) -> (!transform.any_op, !transform.op<"func.call">)
 
         // Fixme: How come the vector_sizes [1, 64] is not working?
-        // transform.structured.vectorize %tiled_op1 vector_sizes [1, 64] : !transform.any_op
+        %vec_target = transform.structured.match ops{["linalg.generic", "linalg.fill"]} in %func : (!transform.any_op) -> !transform.any_op
+        transform.structured.vectorize %vec_target vector_sizes[64, 64] : !transform.any_op
+        //transform.structured.vectorize %vec_target vector_sizes[%ct_row, %csimd_width] : (!transform.any_op, !transform.param<i64>, !transform.param<i64>) -> (!transform.any_op, !transform.any_op)
         //transform.structured.vectorize %tiled_op1 : !transform.any_op
-        %veced_tile = transform.structured.vectorize_children_and_apply_patterns %func : (!transform.any_op) -> !transform.any_op
+        //%vec_target = transform.structured.match ops{["linalg.generic", "linalg.fill"]} in %func : (!transform.any_op) -> !transform.any_op
+        //%veced_tile = transform.structured.vectorize_children_and_apply_patterns %vec_target : (!transform.any_op) -> !transform.any_op
         //transform.structured.vectorize %func: !transform.any_op
       }
 
+      %func_mat, %call_mat = transform.kestrel.loop.outline_with_uniq_name %tiled_op_mat {func_name = "func_Aice"} : (!transform.any_op) -> (!transform.any_op, !transform.op<"func.call">)
+      %target_mat = transform.structured.match ops{["linalg.matmul"]} in %func_mat : (!transform.any_op) -> !transform.any_op
+
+      %tiled_target_mat, %forall_target_mat:2 = transform.structured.tile_using_for %target_mat tile_sizes [%ct_row, %csimd_width]
+           : (!transform.any_op, !transform.param<i64>, !transform.param<i64>) -> (!transform.any_op, !transform.any_op, !transform.any_op)
       transform.yield
     }
   }
