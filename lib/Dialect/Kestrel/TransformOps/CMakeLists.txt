@@ -1,16 +1,28 @@
 add_mlir_library(
-  KestrelTransformOps
+  KestrelIR
 
+  KestrelOps.cpp
   KestrelTransformOps.cpp
 
   ADDITIONAL_HEADER_DIRS
   ${PROJECT_SOURCE_DIR}/include/Dialect/Kestrel/TransformOps
 
   DEPENDS
+  KestrelOpsIncGen
   KestrelTransformOpsIncGen
 
   LINK_LIBS PRIVATE
+  MLIRAnalysis
+  MLIRFunctionInterfaces
+  MLIRIR
+  MLIRParser
+  MLIRSideEffectInterfaces
+  MLIRTransforms
   MLIRTransformDialect
   MLIRFuncDialect
   MLIRSCFDialect
+)
+
+set(MLIR_KESTREL_LIBS
+  KestrelIR
 )

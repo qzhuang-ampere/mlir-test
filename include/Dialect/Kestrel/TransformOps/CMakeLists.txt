@@ -1,7 +1,13 @@
+set(LLVM_TARGET_DEFINITIONS KestrelOps.td)
+mlir_tablegen(KestrelOps.h.inc -gen-op-decls)
+mlir_tablegen(KestrelOps.cpp.inc -gen-op-defs)
+mlir_tablegen(KestrelDialect.h.inc -gen-dialect-decls)
+mlir_tablegen(KestrelDialect.cpp.inc -gen-dialect-defs)
+add_public_tablegen_target(KestrelOpsIncGen)
+add_mlir_doc(KestrelOpsDoc KestrelOpsDoc Kestrel/ -gen-op-doc)
+
 set(LLVM_TARGET_DEFINITIONS KestrelTransformOps.td)
 mlir_tablegen(KestrelTransformOps.h.inc -gen-op-decls)
 mlir_tablegen(KestrelTransformOps.cpp.inc -gen-op-defs)
-
 add_public_tablegen_target(KestrelTransformOpsIncGen)
-
 add_mlir_doc(KestrelTransformOpsDoc KestrelTransformOpsDoc Kestrel/ -gen-op-doc)
