@@ -2,6 +2,7 @@
 // This file defines a dialect extension for the Transform dialect
 //===----------------------------------------------------------------------===//
 
+#include "KestrelOps.h"
 #include "KestrelTransformOps.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/SCF/IR/SCF.h"
