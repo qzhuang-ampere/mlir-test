@@ -11,3 +11,11 @@ mlir_tablegen(KestrelTransformOps.h.inc -gen-op-decls)
 mlir_tablegen(KestrelTransformOps.cpp.inc -gen-op-defs)
 add_public_tablegen_target(KestrelTransformOpsIncGen)
 add_mlir_doc(KestrelTransformOpsDoc KestrelTransformOpsDoc Kestrel/ -gen-op-doc)
+
+set(LLVM_TARGET_DEFINITIONS Passes.td)
+mlir_tablegen(Passes.h.inc -gen-pass-decls -name Kestrel)
+mlir_tablegen(Passes.capi.h.inc -gen-pass-capi-header --prefix Kestrel)
+mlir_tablegen(Passes.capi.cpp.inc -gen-pass-capi-impl --prefix Kestrel)
+add_public_tablegen_target(KestrelPassIncGen)
+
+add_mlir_doc(PassesDoc KestrelPassesDoc Kestrel/ -gen-pass-doc)

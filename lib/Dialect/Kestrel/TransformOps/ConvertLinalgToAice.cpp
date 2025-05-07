@@ -27,8 +27,6 @@ struct LinalgMatmulToAiceMatul : public OpConversionPattern<linalg::MatmulOp> {
 
     MLIRContext *context = rewriter.getContext();
 
-    std::vector<Dialect *> dialects = context->getLoadedDialects();
-
     // Create a new AiceMatMulOp with the same attributes as the original.
     auto newOp = rewriter.create<kestrel::AiceMatMulOp>(
         op.getLoc(), op.getResultTypes(), op.getInputs()[0], op.getInputs()[1]);
