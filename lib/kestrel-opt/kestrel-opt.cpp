@@ -1,5 +1,6 @@
+#include "include/Dialect/Kestrel/TransformOps/KestrelOps.h"
 #include "include/Dialect/Kestrel/TransformOps/KestrelTransformOps.h"
-
+#include "include/Dialect/Kestrel/TransformOps/Passes.h"
 #include "mlir/Dialect/Transform/Transforms/Passes.h"
 #include "mlir/IR/DialectRegistry.h"
 #include "mlir/IR/MLIRContext.h"
@@ -14,16 +15,16 @@ int main(int argc, char **argv) {
   mlir::DialectRegistry registry;
   mlir::registerAllDialects(registry);
   mlir::registerAllExtensions(registry);
+
+  // Register the transform ops
   registerKestrelTransformOps(registry);
 
-  // Register transform interpreter pass.
+  // Register transform interpreter pass. for the cmd line option
   mlir::transform::registerInterpreterPass();
-
-  // Register a handful of cleanup passes that we can run to make the output IR
-  // look nicer.
   mlir::registerCanonicalizerPass();
   mlir::registerCSEPass();
   mlir::registerSymbolDCEPass();
+  mlir::registerConvertLinalgToAicePass();
 
   // Delegate to the MLIR utility for parsing and pass management.
   return mlir::MlirOptMain(argc, argv, "kestrel-opt", registry)

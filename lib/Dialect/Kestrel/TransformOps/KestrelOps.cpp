@@ -3,7 +3,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "KestrelOps.h"
-#include "KestrelDialect.cpp.inc"
 #include "mlir/IR/Attributes.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinTypes.h"
@@ -18,13 +17,14 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
 
+#include "KestrelDialect.cpp.inc"
+
 void ::mlir::kestrel::KestrelDialect::initialize() {
   addOperations<
 #define GET_OP_LIST
 #include "KestrelOps.cpp.inc"
       >();
 }
-
 
 #define GET_OP_CLASSES
 #include "KestrelOps.cpp.inc"

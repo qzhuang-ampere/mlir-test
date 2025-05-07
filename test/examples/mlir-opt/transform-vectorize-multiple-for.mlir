@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s --transform-interpreter --split-input-file -canonicalize -cse | FileCheck %s
+// RUN: mlir-opt %s --transform-interpreter --split-input-file -canonicalize -cse -kestrel-convert-linalg-to-aice | FileCheck %s
 
 // This is a simple tile-and-fuse example with a single fusion group.
 
@@ -57,10 +57,11 @@ module {
         //%func, %call = transform.loop.outline %forall_op {func_name = } : (!transform.any_op) -> (!transform.any_op, !transform.op<"func.call">)
 
         // Fixme: How come the vector_sizes [1, 64] is not working?
+        // Fixme: Why %ct_row and %csimd_width are not working?
         %vec_target = transform.structured.match ops{["linalg.generic", "linalg.fill"]} in %func : (!transform.any_op) -> !transform.any_op
         transform.structured.vectorize %vec_target vector_sizes[64, 64] : !transform.any_op
         //transform.structured.vectorize %vec_target vector_sizes[%ct_row, %csimd_width] : (!transform.any_op, !transform.param<i64>, !transform.param<i64>) -> (!transform.any_op, !transform.any_op)
-        //transform.structured.vectorize %tiled_op1 : !transform.any_op
+
         //%vec_target = transform.structured.match ops{["linalg.generic", "linalg.fill"]} in %func : (!transform.any_op) -> !transform.any_op
         //%veced_tile = transform.structured.vectorize_children_and_apply_patterns %vec_target : (!transform.any_op) -> !transform.any_op
         //transform.structured.vectorize %func: !transform.any_op
@@ -71,6 +72,7 @@ module {
 
       %tiled_target_mat, %forall_target_mat:2 = transform.structured.tile_using_for %target_mat tile_sizes [%ct_row, %csimd_width]
            : (!transform.any_op, !transform.param<i64>, !transform.param<i64>) -> (!transform.any_op, !transform.any_op, !transform.any_op)
+
       transform.yield
     }
   }

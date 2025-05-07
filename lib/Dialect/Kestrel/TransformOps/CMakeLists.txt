@@ -3,6 +3,7 @@ add_mlir_library(
 
   KestrelOps.cpp
   KestrelTransformOps.cpp
+  ConvertLinalgToAice.cpp
 
   ADDITIONAL_HEADER_DIRS
   ${PROJECT_SOURCE_DIR}/include/Dialect/Kestrel/TransformOps
@@ -10,6 +11,7 @@ add_mlir_library(
   DEPENDS
   KestrelOpsIncGen
   KestrelTransformOpsIncGen
+  KestrelPassIncGen
 
   LINK_LIBS PRIVATE
   MLIRAnalysis

@@ -51,7 +51,7 @@ std::string generateRandomString() {
   static const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   static std::mt19937 generator(static_cast<unsigned>(std::time(nullptr)));
   static std::uniform_int_distribution<size_t> distribution(0, characters.size() - 1);
-  static const int length = 4; // Desired length of the random string
+  static const int length = 8; // Desired length of the random string
 
   std::string randomString = "_";
 
@@ -93,7 +93,6 @@ static scf::ExecuteRegionOp wrapInExecuteRegion(RewriterBase &b,
   auto target = getTarget();
   llvm::StringRef funcName = getFuncName();
   std::string nameWithPostfix = funcName.str() + generateRandomString();
-  llvm::dbgs() << nameWithPostfix << "\n";
 
   SmallVector<Operation *> functions;
   SmallVector<Operation *> calls;
