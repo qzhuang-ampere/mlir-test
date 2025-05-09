@@ -2,6 +2,7 @@
 #include "include/Dialect/Kestrel/TransformOps/KestrelTransformOps.h"
 #include "include/Dialect/Kestrel/TransformOps/Passes.h"
 #include "mlir/Dialect/Transform/Transforms/Passes.h"
+#include "mlir/Dialect/Bufferization/Transforms/Passes.h"
 #include "mlir/IR/DialectRegistry.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/InitAllDialects.h"
@@ -15,6 +16,7 @@ int main(int argc, char **argv) {
   mlir::DialectRegistry registry;
   mlir::registerAllDialects(registry);
   mlir::registerAllExtensions(registry);
+  mlir::registerPassManagerCLOptions();
 
   // Register the transform ops
   registerKestrelTransformOps(registry);
@@ -25,6 +27,7 @@ int main(int argc, char **argv) {
   mlir::registerCSEPass();
   mlir::registerSymbolDCEPass();
   mlir::registerConvertLinalgToAicePass();
+  mlir::bufferization::registerOneShotBufferizePass();
 
   // Delegate to the MLIR utility for parsing and pass management.
   return mlir::MlirOptMain(argc, argv, "kestrel-opt", registry)
