@@ -5,6 +5,7 @@
 #ifndef MLIR_DIALECT_KESTREL_IR_KESTRELOPS_H
 #define MLIR_DIALECT_KESTREL_IR_KESTRELOPS_H
 
+#include "mlir/Bytecode/BytecodeOpInterface.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinTypes.h"
 
