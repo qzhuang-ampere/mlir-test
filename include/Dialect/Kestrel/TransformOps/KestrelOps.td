@@ -42,12 +42,15 @@ def DMALoadOp : KestrelOp<"dma.load"> {
   }];
 
   let arguments = (ins AnyTensor : $buffer,
-                       I32Attr : $offset,
-                       I32Attr : $stride,
-                       I32Attr : $size);
+                       I32 : $offset,
+                       I32 : $stride,
+                       I32 : $size);
   let results = (outs AnyTensor : $result);
 
-  let assemblyFormat = "`dma.load` $buffer attr-dict `:` type($buffer) `->` type($result)";
+  let assemblyFormat = [{
+    `dma.load` $buffer attr-dict `offset` $offset `stride` $stride `size` $size `:`
+     type($buffer) type($offset) type($stride) type($size) `->` type($result)
+    }];
 }
 
 def DMAStoreOp : KestrelOp<"dma.store"> {
@@ -57,12 +60,15 @@ def DMAStoreOp : KestrelOp<"dma.store"> {
   }];
 
   let arguments = (ins AnyTensor : $buffer,
-                       I32Attr : $offset,
-                       I32Attr : $stride,
-                       I32Attr : $size);
+                       I32 : $offset,
+                       I32 : $stride,
+                       I32 : $size);
   let results = (outs AnyTensor : $result);
 
-  let assemblyFormat = "`dam.store` $buffer attr-dict `:` type($buffer) `->` type($result)";
+  let assemblyFormat = [{
+    `dma.store` $buffer attr-dict `offset` $offset `stride` $stride `size` $size `:`
+     type($buffer) type($offset) type($stride) type($size) `->` type($result)
+  }];
 }
 
 def SyncOp : KestrelOp<"sync"> {
@@ -86,12 +92,65 @@ def AiceMatMulWithDepOp : KestrelOp<"aice_matmul_with_dep"> {
 
   let arguments = (ins AnyTensor : $lhs,
                        AnyTensor : $rhs,
-                       I32Attr : $doid0,
-                       I32Attr : $doid1,
-                       I32Attr : $doid2);
-  let results = (outs AnyTensor : $result,
-                      I32 : $did);
+                       I32 : $doid0,
+                       I32 : $doid1,
+                       I32 : $doid2,
+                       I32 : $did);
+  let results = (outs AnyTensor : $result);
 
-  let assemblyFormat = "$lhs `,` $rhs attr-dict `:` type($lhs) type($rhs) `->` type($result) type($did)";
+  let assemblyFormat = [{
+    `aice_matmul_with_dep` $lhs `,` $rhs `,` `doids` $doid0 `,` $doid1 `,` $doid2 `did` $did attr-dict `:`
+     type($lhs) type($rhs) type($doid0) type($doid1) type($doid2) type($did) `->` type($result)
+  }];
+}
+
+def DMALoadWithDepOp : KestrelOp<"dma.load_with_dep"> {
+  let summary = "DMA load operation with dependencies";
+  let description = [{
+    This operation performs a DMA load from memory into a specified buffer,
+    with dependencies on other operations.
+  }];
+
+  let arguments = (ins AnyTensor : $buffer,
+                       I32 : $offset,
+                       I32 : $stride,
+                       I32 : $size,
+                       I32 : $doid0,
+                       I32 : $doid1,
+                       I32 : $doid2,
+                       I32 : $did);
+  let results = (outs AnyTensor : $result);
+
+  let assemblyFormat = [{
+    `dma.load_with_dep` $buffer `offset` $offset `stride` $stride `size` $size
+     `,` `doids` $doid0 `,` $doid1 `,` $doid2 `did` $did attr-dict `:`
+     type($buffer) type($offset) type($stride) type($size) type($doid0) type($doid1) type($doid2) type($did)
+     `->` type($result)
+  }];
+}
+
+def DMAStoreWithDepOp : KestrelOp<"dma.store_with_dep"> {
+  let summary = "DMA store operation with dependencies";
+  let description = [{
+    This operation performs a DMA store from a specified buffer to memory,
+    with dependencies on other operations.
+  }];
+
+  let arguments = (ins AnyTensor : $buffer,
+                       I32 : $offset,
+                       I32 : $stride,
+                       I32 : $size,
+                       I32 : $doid0,
+                       I32 : $doid1,
+                       I32 : $doid2,
+                       I32 : $did);
+  let results = (outs AnyTensor : $result);
+
+  let assemblyFormat = [{
+    `dma.store_with_dep` $buffer `offset` $offset `stride` $stride `size` $size
+     `,` `doids` $doid0 `,` $doid1 `,` $doid2 `did` $did attr-dict `:`
+     type($buffer) type($offset) type($stride) type($size) type($doid0) type($doid1) type($doid2) type($did)
+     `->` type($result)
+  }];
 }
 #endif // KESTREL_OPS
