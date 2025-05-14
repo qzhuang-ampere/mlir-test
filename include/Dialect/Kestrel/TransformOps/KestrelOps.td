@@ -7,6 +7,7 @@
 
 include "mlir/IR/OpBase.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
+include "mlir/Interfaces/ViewLikeInterface.td"
 
 def KestrelDialect : Dialect {
   let name = "kestrel";
@@ -35,21 +36,29 @@ def AiceMatMulOp : KestrelOp<"aice_matmul"> {
   let assemblyFormat = "$lhs `,` $rhs attr-dict `:` type($lhs) type($rhs) `->` type($result)";
 }
 
-def DMALoadOp : KestrelOp<"dma.load"> {
+def DMALoadOp : KestrelOp<"dma.load", [
+    SameVariadicOperandSize]> {
   let summary = "DMA load operation";
   let description = [{
     This operation performs a DMA load from memory into a specified buffer.
   }];
 
-  let arguments = (ins AnyTensor : $buffer,
-                       I32 : $offset,
-                       I32 : $stride,
-                       I32 : $size);
+  let arguments = (ins AnyTensor:$source,
+                       Variadic<Index>:$offsets,
+                       Variadic<Index>:$sizes,
+                       Variadic<Index>:$strides,
+                       DenseI64ArrayAttr:$static_offsets,
+                       DenseI64ArrayAttr:$static_sizes,
+                       DenseI64ArrayAttr:$static_strides);
   let results = (outs AnyTensor : $result);
 
   let assemblyFormat = [{
-    `dma.load` $buffer attr-dict `offset` $offset `stride` $stride `size` $size `:`
-     type($buffer) type($offset) type($stride) type($size) `->` type($result)
+    `dma.load`
+    $source ``
+    custom<DynamicIndexList>($offsets, $static_offsets)
+    custom<DynamicIndexList>($sizes, $static_sizes)
+    custom<DynamicIndexList>($strides, $static_strides)
+    attr-dict `:` type($source) `to` type($result)
     }];
 }
 
