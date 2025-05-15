@@ -37,7 +37,7 @@ def AiceMatMulOp : KestrelOp<"aice_matmul"> {
 }
 
 def DMALoadOp : KestrelOp<"dma.load", [
-    SameVariadicOperandSize]> {
+    AttrSizedOperandSegments]> {
   let summary = "DMA load operation";
   let description = [{
     This operation performs a DMA load from memory into a specified buffer.
@@ -53,7 +53,6 @@ def DMALoadOp : KestrelOp<"dma.load", [
   let results = (outs AnyTensor : $result);
 
   let assemblyFormat = [{
-    `dma.load`
     $source ``
     custom<DynamicIndexList>($offsets, $static_offsets)
     custom<DynamicIndexList>($sizes, $static_sizes)
@@ -62,21 +61,31 @@ def DMALoadOp : KestrelOp<"dma.load", [
     }];
 }
 
-def DMAStoreOp : KestrelOp<"dma.store"> {
+def DMAStoreOp : KestrelOp<"dma.store", [
+    AttrSizedOperandSegments,
+    TypesMatchWith<"expected result type to match dest type",
+                   "dest", "result", "$_self">]> {
   let summary = "DMA store operation";
   let description = [{
     This operation performs a DMA store from a specified buffer to memory.
   }];
 
-  let arguments = (ins AnyTensor : $buffer,
-                       I32 : $offset,
-                       I32 : $stride,
-                       I32 : $size);
+  let arguments = (ins AnyTensor : $source,
+                       AnyTensor:$dest,
+                       Variadic<Index>:$offsets,
+                       Variadic<Index>:$sizes,
+                       Variadic<Index>:$strides,
+                       DenseI64ArrayAttr:$static_offsets,
+                       DenseI64ArrayAttr:$static_sizes,
+                       DenseI64ArrayAttr:$static_strides);
   let results = (outs AnyTensor : $result);
 
   let assemblyFormat = [{
-    `dma.store` $buffer attr-dict `offset` $offset `stride` $stride `size` $size `:`
-     type($buffer) type($offset) type($stride) type($size) `->` type($result)
+    $source `into` $dest ``
+    custom<DynamicIndexList>($offsets, $static_offsets)
+    custom<DynamicIndexList>($sizes, $static_sizes)
+    custom<DynamicIndexList>($strides, $static_strides)
+    attr-dict `:` type($source) `to` type($dest)
   }];
 }
 
