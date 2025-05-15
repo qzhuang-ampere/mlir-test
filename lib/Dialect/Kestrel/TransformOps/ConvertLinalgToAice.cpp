@@ -47,16 +47,34 @@ struct TensorExtractSliceToDMALoad : public OpConversionPattern<tensor::ExtractS
                   ConversionPatternRewriter &rewriter) const override {
 
     // Create a new DMALoadOp with the same attributes as the original.
-    auto staticSizes = op.getStaticSizes();
-    auto staticStrides = op.getStaticStrides();
-    auto staticOffsets = op.getStaticOffsets();
+    auto mixedSizes = op.getMixedSizes();
+    auto mixedStrides = op.getMixedStrides();
+    auto mixedOffsets = op.getMixedOffsets();
 
     auto newOp = rewriter.create<kestrel::DMALoadOp>(
-        op.getLoc(), op.getResultType(), op.getSource(), op.getSizes(),
-        op.getStrides(), op.getOffsets(),
-        rewriter.getDenseI64ArrayAttr(staticSizes),
-        rewriter.getDenseI64ArrayAttr(staticStrides),
-        rewriter.getDenseI64ArrayAttr(staticOffsets));
+        op.getLoc(), op.getResultType(), op.getSource(), op.getOffsets(),
+        op.getStrides(), op.getSizes(), op.getStaticOffsets(),
+        op.getStaticStrides(), op.getStaticSizes());
+    rewriter.replaceOp(op, newOp);
+    return success();
+  }
+};
+
+struct TensorInsertSliceToDMAStore : public OpConversionPattern<tensor::InsertSliceOp> {
+  using OpConversionPattern<tensor::InsertSliceOp>::OpConversionPattern;
+  LogicalResult
+  matchAndRewrite(tensor::InsertSliceOp op, OpAdaptor adaptor,
+                  ConversionPatternRewriter &rewriter) const override {
+
+    // Create a new DMAStoreOp with the same attributes as the original.
+    auto mixedSizes = op.getMixedSizes();
+    auto mixedStrides = op.getMixedStrides();
+    auto mixedOffsets = op.getMixedOffsets();
+
+    auto newOp = rewriter.create<kestrel::DMAStoreOp>(
+        op.getLoc(), op.getResultType(), op.getSource(), op.getDest(), op.getOffsets(),
+        op.getStrides(), op.getSizes(), op.getStaticOffsets(),
+        op.getStaticStrides(), op.getStaticSizes());
     rewriter.replaceOp(op, newOp);
     return success();
   }
@@ -64,7 +82,12 @@ struct TensorExtractSliceToDMALoad : public OpConversionPattern<tensor::ExtractS
 
 void populateLinalgToAiceConversionPatterns(RewritePatternSet &patterns) {
   patterns.add<LinalgMatmulToAiceMatul>(patterns.getContext());
+}
+
+void populateGlobalTensorMoveToDMAConversionPatterns(
+    RewritePatternSet &patterns) {
   patterns.add<TensorExtractSliceToDMALoad>(patterns.getContext());
+  patterns.add<TensorInsertSliceToDMAStore>(patterns.getContext());
 }
 
 void ConvertLinalgToAicePass::runOnOperation() {
@@ -92,22 +115,20 @@ void ConvertLinalgToAicePass::runOnOperation() {
       }
       else {
         LLVM_DEBUG(llvm::outs() << "Working on unction name: " << function.getName() << "\n");
+        RewritePatternSet patterns(&getContext());
+        populateGlobalTensorMoveToDMAConversionPatterns(patterns);
+        if (failed(applyPartialConversion(function, target, std::move(patterns)))) {
+          signalPassFailure();
+        }
       }
 
       // loop all operations in the function
       function.walk([&](Operation *opPtr) {
         if (auto op = mlir::dyn_cast<tensor::ExtractSliceOp>(opPtr)) {
-          LLVM_DEBUG(llvm::outs() << "Found tensor::ExtractSlicelOp: " << op->getName() << "\n");
-          op->dump();
-
-          llvm::outs() << "\n";
         }
         else {
-          LLVM_DEBUG(llvm::outs() << "Found other op: " << op->getName() << "\n");
         }
       });
     }
   });
-  module->dump();
-
 }

@@ -5,8 +5,8 @@
 namespace mlir {
 namespace kestrel {
 
-constexpr const char *kConnorFunctionPrefix = "function_Connor";
-constexpr const char *kAiceFunctionPrefix = "function_Aice";
+constexpr const char *kConnorFunctionPrefix = "func_Connor";
+constexpr const char *kAiceFunctionPrefix = "func_Aice";
 
 }
 }
