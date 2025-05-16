@@ -3,6 +3,7 @@
 #include "include/Dialect/Kestrel/TransformOps/Passes.h"
 #include "mlir/Dialect/Transform/Transforms/Passes.h"
 #include "mlir/Dialect/Bufferization/Transforms/Passes.h"
+#include "mlir/Dialect/Linalg/Passes.h"
 #include "mlir/IR/DialectRegistry.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/InitAllDialects.h"
@@ -28,6 +29,9 @@ int main(int argc, char **argv) {
   mlir::registerSymbolDCEPass();
   mlir::registerConvertLinalgToAicePass();
   mlir::bufferization::registerOneShotBufferizePass();
+  ::mlir::registerPass([]() -> std::unique_ptr<::mlir::Pass> {
+    return ::mlir::createLinalgBlockPackMatmul();
+  });
 
   // Delegate to the MLIR utility for parsing and pass management.
   return mlir::MlirOptMain(argc, argv, "kestrel-opt", registry)
