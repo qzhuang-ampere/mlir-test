@@ -16,6 +16,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
+#include "mlir/Dialect/Bufferization/IR/BufferizableOpInterface.h"
 
 #include "KestrelDialect.cpp.inc"
 
@@ -24,6 +25,8 @@ void ::mlir::kestrel::KestrelDialect::initialize() {
 #define GET_OP_LIST
 #include "KestrelOps.cpp.inc"
       >();
+declarePromisedInterfaces<
+    bufferization::BufferizableOpInterface, DMALoadOp, DMAStoreOp>();
 }
 
 #define GET_OP_CLASSES
