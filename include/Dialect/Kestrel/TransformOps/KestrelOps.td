@@ -29,9 +29,9 @@ def AiceMatMulOp : KestrelOp<"aice_matmul"> {
     and produces an output matrix.
   }];
 
-  let arguments = (ins AnyTensor : $lhs,
-                       AnyTensor : $rhs);
-  let results = (outs AnyTensor : $result);
+  let arguments = (ins AnyType : $lhs,
+                       AnyType : $rhs);
+  let results = (outs AnyType : $result);
 
   let assemblyFormat = "$lhs `,` $rhs attr-dict `:` type($lhs) type($rhs) `->` type($result)";
 }
@@ -43,14 +43,14 @@ def DMALoadOp : KestrelOp<"dma.load", [
     This operation performs a DMA load from memory into a specified buffer.
   }];
 
-  let arguments = (ins AnyTensor:$source,
+  let arguments = (ins AnyType:$source,
                        Variadic<Index>:$offsets,
                        Variadic<Index>:$sizes,
                        Variadic<Index>:$strides,
                        DenseI64ArrayAttr:$static_offsets,
                        DenseI64ArrayAttr:$static_sizes,
                        DenseI64ArrayAttr:$static_strides);
-  let results = (outs AnyTensor : $result);
+  let results = (outs AnyType : $result);
 
   let assemblyFormat = [{
     $source ``
@@ -70,15 +70,15 @@ def DMAStoreOp : KestrelOp<"dma.store", [
     This operation performs a DMA store from a specified buffer to memory.
   }];
 
-  let arguments = (ins AnyTensor : $source,
-                       AnyTensor:$dest,
+  let arguments = (ins AnyType : $source,
+                       AnyType : $dest,
                        Variadic<Index>:$offsets,
                        Variadic<Index>:$sizes,
                        Variadic<Index>:$strides,
                        DenseI64ArrayAttr:$static_offsets,
                        DenseI64ArrayAttr:$static_sizes,
                        DenseI64ArrayAttr:$static_strides);
-  let results = (outs AnyTensor : $result);
+  let results = (outs AnyType : $result);
 
   let assemblyFormat = [{
     $source `into` $dest ``

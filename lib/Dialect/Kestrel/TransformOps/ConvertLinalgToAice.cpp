@@ -47,10 +47,6 @@ struct TensorExtractSliceToDMALoad : public OpConversionPattern<tensor::ExtractS
                   ConversionPatternRewriter &rewriter) const override {
 
     // Create a new DMALoadOp with the same attributes as the original.
-    auto mixedSizes = op.getMixedSizes();
-    auto mixedStrides = op.getMixedStrides();
-    auto mixedOffsets = op.getMixedOffsets();
-
     auto newOp = rewriter.create<kestrel::DMALoadOp>(
         op.getLoc(), op.getResultType(), op.getSource(), op.getOffsets(),
         op.getStrides(), op.getSizes(), op.getStaticOffsets(),
@@ -67,10 +63,6 @@ struct TensorInsertSliceToDMAStore : public OpConversionPattern<tensor::InsertSl
                   ConversionPatternRewriter &rewriter) const override {
 
     // Create a new DMAStoreOp with the same attributes as the original.
-    auto mixedSizes = op.getMixedSizes();
-    auto mixedStrides = op.getMixedStrides();
-    auto mixedOffsets = op.getMixedOffsets();
-
     auto newOp = rewriter.create<kestrel::DMAStoreOp>(
         op.getLoc(), op.getResultType(), op.getSource(), op.getDest(), op.getOffsets(),
         op.getStrides(), op.getSizes(), op.getStaticOffsets(),

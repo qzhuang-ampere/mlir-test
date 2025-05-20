@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s --transform-interpreter --split-input-file -canonicalize -cse -kestrel-convert-linalg-to-aice -one-shot-bufferize="copy-before-write unknown-type-conversion=identity-layout-map"  | FileCheck %s
+// RUN: mlir-opt %s --transform-interpreter --split-input-file -canonicalize -cse -kestrel-convert-linalg-to-aice -one-shot-bufferize="copy-before-write bufferize-function-boundaries unknown-type-conversion=identity-layout-map"  | FileCheck %s
 //
 #map = affine_map<(d0, d1) -> (d0, d1)>
 #map1 = affine_map<(d0, d1) -> (0, d1)>
