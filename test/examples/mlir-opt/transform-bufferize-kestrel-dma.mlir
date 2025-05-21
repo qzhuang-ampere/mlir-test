@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s --transform-interpreter --split-input-file -canonicalize -cse -kestrel-convert-linalg-to-aice -one-shot-bufferize="copy-before-write bufferize-function-boundaries unknown-type-conversion=identity-layout-map"  | FileCheck %s
+// RUN: mlir-opt %s --transform-interpreter --split-input-file -canonicalize -cse -kestrel-convert-linalg-to-aice | FileCheck %s
 // RUN: mlir-opt %s -one-shot-bufferize="test-analysis-only analysis-heuristic=bottom-up-from-terminators"
 #map = affine_map<(d0, d1) -> (d0, d1)>
 #map1 = affine_map<(d0, d1) -> (0, d1)>
@@ -46,7 +46,7 @@ module {
         //transform.print %forloop_op#0 : !transform.any_op
         //transform.print %tiled_op : !transform.any_op
 
-        %tiled_op1, %forall_op = transform.structured.tile_using_forall %tiled_op tile_sizes [0, %csimd_width]
+        %tiled_op1, %forall_op = transform.structured.tile_using_for %tiled_op tile_sizes [0, %csimd_width]
             : (!transform.any_op, !transform.param<i64>) -> (!transform.any_op, !transform.any_op)
 
         //transform.print %tiled_op1 : !transform.any_op
@@ -68,8 +68,8 @@ module {
       %func_mat, %call_mat = transform.kestrel.loop.outline_with_uniq_name %tiled_op_mat {func_name = "func_Aice"} : (!transform.any_op) -> (!transform.any_op, !transform.op<"func.call">)
       %target_mat = transform.structured.match ops{["linalg.matmul"]} in %func_mat : (!transform.any_op) -> !transform.any_op
 
-      %tiled_target_mat, %forall_target_mat = transform.structured.tile_using_forall %target_mat tile_sizes [%ct_row, %csimd_width]
-           : (!transform.any_op, !transform.param<i64>, !transform.param<i64>) -> (!transform.any_op, !transform.any_op)
+      %tiled_target_mat, %forall_target_mat:2 = transform.structured.tile_using_for %target_mat tile_sizes [%ct_row, %csimd_width]
+           : (!transform.any_op, !transform.param<i64>, !transform.param<i64>) -> (!transform.any_op, !transform.any_op, !transform.any_op)
 
       transform.yield
     }
