@@ -124,7 +124,7 @@ module {
 
       %for_alls = transform.structured.match ops{["scf.forall"]} in %arg1 : (!transform.any_op) -> !transform.any_op
       //transform.print %for_alls : !transform.any_op
-      //transform.foreach  %for_alls : !transform.any_op {
+      transform.foreach  %for_alls : !transform.any_op {
       ^bb1(%for_all : !transform.any_op):
         %gpuLaunch = transform.gpu.map_forall_to_blocks %for_all { generate_gpu_launch } : (!transform.any_op) -> !transform.any_op
       }
