@@ -3,6 +3,7 @@
 #include "include/Dialect/Kestrel/TransformOps/common.h"
 #include "mlir/Dialect/Linalg/IR/Linalg.h"
 #include "mlir/Dialect/Tensor/IR/Tensor.h"
+#include "mlir/Dialect/SCF/IR/SCF.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Transforms/DialectConversion.h"
@@ -72,6 +73,23 @@ struct TensorInsertSliceToDMAStore : public OpConversionPattern<tensor::InsertSl
   }
 };
 
+struct TensorParallelInsertSliceToDMAStore : public OpConversionPattern<tensor::ParallelInsertSliceOp> {
+  using OpConversionPattern<tensor::ParallelInsertSliceOp>::OpConversionPattern;
+  LogicalResult
+  matchAndRewrite(tensor::ParallelInsertSliceOp op, OpAdaptor adaptor,
+                  ConversionPatternRewriter &rewriter) const override {
+    auto newOp = rewriter.create<kestrel::DMAParallelStoreOp>(
+        op.getLoc(),
+        op.getSource(), op.getDest(),
+        op.getOffsets(),
+        op.getStrides(), op.getSizes(),
+        op.getStaticOffsets(),
+        op.getStaticStrides(), op.getStaticSizes());
+    rewriter.replaceOp(op, newOp);
+    return success();
+  }
+};
+
 void populateLinalgToAiceConversionPatterns(RewritePatternSet &patterns) {
   patterns.add<LinalgMatmulToAiceMatul>(patterns.getContext());
 }
@@ -80,6 +98,7 @@ void populateGlobalTensorMoveToDMAConversionPatterns(
     RewritePatternSet &patterns) {
   patterns.add<TensorExtractSliceToDMALoad>(patterns.getContext());
   patterns.add<TensorInsertSliceToDMAStore>(patterns.getContext());
+  //patterns.add<TensorParallelInsertSliceToDMAStore>(patterns.getContext());
 }
 
 void ConvertLinalgToAicePass::runOnOperation() {
@@ -106,7 +125,7 @@ void ConvertLinalgToAicePass::runOnOperation() {
         LLVM_DEBUG(llvm::outs() << "Skipping function name: " << function.getName() << "\n");
       }
       else {
-        LLVM_DEBUG(llvm::outs() << "Working on unction name: " << function.getName() << "\n");
+        LLVM_DEBUG(llvm::outs() << "Working on function name: " << function.getName() << "\n");
         RewritePatternSet patterns(&getContext());
         populateGlobalTensorMoveToDMAConversionPatterns(patterns);
         if (failed(applyPartialConversion(function, target, std::move(patterns)))) {

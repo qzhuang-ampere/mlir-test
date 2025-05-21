@@ -7,6 +7,7 @@
 
 include "mlir/IR/OpBase.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
+include "mlir/Interfaces/DestinationStyleOpInterface.td"
 include "mlir/Interfaces/ViewLikeInterface.td"
 
 def KestrelDialect : Dialect {
@@ -59,6 +60,32 @@ def DMALoadOp : KestrelOp<"dma.load", [
     custom<DynamicIndexList>($strides, $static_strides)
     attr-dict `:` type($source) `to` type($result)
     }];
+}
+
+def DMAParallelStoreOp : KestrelOp<"dma.parallel_store", [
+    AttrSizedOperandSegments]> {
+  let summary = "DMA store operation";
+  let description = [{
+    This operation performs a DMA store from a specified buffer to memory.
+  }];
+
+  let arguments = (ins AnyType : $source,
+                       AnyType : $dest,
+                       Variadic<Index>:$offsets,
+                       Variadic<Index>:$sizes,
+                       Variadic<Index>:$strides,
+                       DenseI64ArrayAttr:$static_offsets,
+                       DenseI64ArrayAttr:$static_sizes,
+                       DenseI64ArrayAttr:$static_strides);
+
+  let assemblyFormat = [{
+    $source `into` $dest ``
+    custom<DynamicIndexList>($offsets, $static_offsets)
+    custom<DynamicIndexList>($sizes, $static_sizes)
+    custom<DynamicIndexList>($strides, $static_strides)
+    attr-dict `:` type($source) `to` type($dest)
+  }];
+
 }
 
 def DMAStoreOp : KestrelOp<"dma.store", [
