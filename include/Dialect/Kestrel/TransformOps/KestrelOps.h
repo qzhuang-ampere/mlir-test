@@ -9,6 +9,7 @@
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/Interfaces/ViewLikeInterface.h"
+#include "mlir/Interfaces/DestinationStyleOpInterface.h"
 
 #include "KestrelDialect.h.inc"
 
