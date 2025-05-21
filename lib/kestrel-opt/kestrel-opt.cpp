@@ -20,6 +20,8 @@ int main(int argc, char **argv) {
   mlir::registerAllExtensions(registry);
   mlir::registerPassManagerCLOptions();
 
+  // Register the Kestrel dialect.
+  registry.insert<mlir::kestrel::KestrelDialect>();
   // Register the transform ops
   registerKestrelTransformOps(registry);
 
