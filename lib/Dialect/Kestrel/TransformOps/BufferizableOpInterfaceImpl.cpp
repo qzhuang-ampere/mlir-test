@@ -20,7 +20,7 @@ struct DMALoadOpInterface
                                                     kestrel::DMALoadOp> {
   bool bufferizesToMemoryRead(Operation *op, OpOperand &opOperand,
                               const AnalysisState &state) const {
-    return false;
+    return true;
   }
 
   bool bufferizesToMemoryWrite(Operation *op, OpOperand &opOperand,
@@ -71,7 +71,7 @@ struct DMAStoreOpInterface
 
   bool bufferizesToMemoryWrite(Operation *op, OpOperand &opOperand,
                                const AnalysisState &state) const {
-    return false;
+    return true;
   }
 
   AliasingValueList getAliasingValues(Operation *op, OpOperand &opOperand,
