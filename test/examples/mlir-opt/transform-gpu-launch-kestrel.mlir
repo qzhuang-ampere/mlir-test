@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s -one-shot-bufferize="copy-before-write bufferize-function-boundaries unknown-type-conversion=identity-layout-map" --transform-interpreter --split-input-file -canonicalize -cse | FileCheck %s
+// RUN: kestrel-opt %s -one-shot-bufferize="copy-before-write bufferize-function-boundaries unknown-type-conversion=identity-layout-map" --transform-interpreter --split-input-file -canonicalize -cse | FileCheck %s
 // -linalg-block-pack-matmul="block-factors=32,16,64 lhs-transpose-outer-blocks=false lhs-transpose-inner-blocks=false rhs-transpose-outer-blocks=true rhs-transpose-inner-blocks=true" -canonicalize
 #map = affine_map<(d0, d1) -> (0, d1)>
 #map1 = affine_map<(d0) -> (d0 * 64)>
