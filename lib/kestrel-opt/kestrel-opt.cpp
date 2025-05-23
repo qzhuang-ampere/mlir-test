@@ -26,6 +26,7 @@ int main(int argc, char **argv) {
   registerKestrelTransformOps(registry);
 
   // Register transform interpreter pass. for the cmd line option
+  // Registering doens't mean loading.
   mlir::transform::registerInterpreterPass();
   mlir::registerCanonicalizerPass();
   mlir::registerCSEPass();
