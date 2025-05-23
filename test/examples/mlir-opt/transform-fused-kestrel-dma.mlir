@@ -24,22 +24,6 @@ module {
 
   module attributes {transform.with_named_sequence} {
     transform.named_sequence @__transform_step1(%arg0: !transform.any_op {transform.readonly}) {
-      transform.yield
-    }
-
-    transform.named_sequence @__transform_step2(%arg0: !transform.any_op {transform.readonly}) {
-      transform.yield
-    }
-
-    transform.named_sequence @do_nothing(%arg0: !transform.any_op {transform.readonly}) {
-      transform.yield
-    }
-
-    transform.named_sequence @__transform_main(%arg0: !transform.any_op {transform.readonly}) {
-      // %0 = transform.foreach_match in %arg0 @__transform_step1 -> @do_nothing
-      //       : (!transform.any_op) -> !transform.any_op
-      // %1 = transform.foreach_match in %0 @__transform_step2 -> @do_nothing
-      //       : (!transform.any_op) -> !transform.any_op
       %csimd_width = transform.param.constant 64 : i64 -> !transform.param<i64>
       %ct_row = transform.param.constant 64 : i64 -> !transform.param<i64>
       %ct_col = transform.param.constant 2048 : i64 -> !transform.param<i64>
@@ -64,11 +48,55 @@ module {
       transform.foreach  %gens : !transform.any_op {
       ^bb1(%gen : !transform.any_op):
         %func, %call = transform.kestrel.loop.outline_with_uniq_name %gen {func_name = "func_Connor"} : (!transform.any_op) -> (!transform.any_op, !transform.op<"func.call">)
-
-        //%vec_target = transform.structured.match ops{["linalg.generic", "linalg.fill"]} in %func : (!transform.any_op) -> !transform.any_op
-        //transform.structured.vectorize %func vector_sizes[64, 64] : !transform.any_op
-        //%veced_tile = transform.structured.vectorize_children_and_apply_patterns %func : (!transform.any_op) -> !transform.any_op
       }
+
+      transform.yield
+    }
+
+    transform.named_sequence @__transform_step2(%arg0: !transform.any_op {transform.readonly}) {
+      %csimd_width = transform.param.constant 64 : i64 -> !transform.param<i64>
+      %ct_row = transform.param.constant 64 : i64 -> !transform.param<i64>
+      %ct_col = transform.param.constant 2048 : i64 -> !transform.param<i64>
+
+      %for_alls = transform.structured.match ops{["scf.forall"]} in %arg0 : (!transform.any_op) -> !transform.any_op
+      transform.foreach  %for_alls : !transform.any_op {
+      ^bb1(%for_all : !transform.any_op):
+        %gpuLaunch = transform.gpu.map_forall_to_blocks %for_all { generate_gpu_launch } : (!transform.any_op) -> !transform.any_op
+      }
+      transform.yield
+    }
+
+    transform.named_sequence @match_func(%arg0: !transform.any_op {transform.readonly}) -> !transform.any_op {
+      transform.match.operation_name %arg0 ["func.func"] : !transform.any_op
+      transform.yield %arg0 : !transform.any_op
+    }
+
+    transform.named_sequence @kestrel_func(%arg0: !transform.any_op {transform.consumed}) {
+      %1 = transform.apply_registered_pass "canonicalize" to %arg0
+      : (!transform.any_op) -> !transform.any_op
+      %2 = transform.apply_registered_pass "cse" to %1
+      : (!transform.any_op) -> !transform.any_op
+      %3 = transform.apply_registered_pass "kestrel-convert-linalg-to-aice" to %2 {options = "load-only=0"}
+      : (!transform.any_op) -> !transform.any_op
+      transform.yield
+    }
+    transform.named_sequence @do_nothing(%arg0: !transform.any_op {transform.readonly}) {
+      transform.yield
+    }
+
+    transform.named_sequence @__transform_main(%arg0: !transform.any_op) {
+      transform.include @__transform_step1 failures(propagate) (%arg0) : (!transform.any_op) -> ()
+
+      %result = transform.foreach_match in %arg0
+                  @match_func -> @kestrel_func
+                  : (!transform.any_op) -> !transform.any_op
+
+      %1 = transform.bufferization.one_shot_bufferize %result { bufferize_function_boundaries = true }
+           : (!transform.any_op) -> !transform.any_op
+
+      transform.include @__transform_step2 failures(propagate) (%1) : (!transform.any_op) -> ()
+
+
       transform.yield
     }
   }
