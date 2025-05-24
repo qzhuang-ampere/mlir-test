@@ -61,9 +61,9 @@ struct DMALoadOpInterface
   }
 };
 
-struct DMAStoreOpInterface
-    : public BufferizableOpInterface::ExternalModel<DMAStoreOpInterface,
-                                                    kestrel::DMAStoreOp> {
+struct DMAStoreWithResultOpInterface
+    : public BufferizableOpInterface::ExternalModel<DMAStoreWithResultOpInterface,
+                                                    kestrel::DMAStoreWithResultOp> {
   bool bufferizesToMemoryRead(Operation *op, OpOperand &opOperand,
                               const AnalysisState &state) const {
     return false;
@@ -81,7 +81,7 @@ struct DMAStoreOpInterface
 
   LogicalResult bufferize(Operation *op, RewriterBase &rewriter,
                           const BufferizationOptions &options) const {
-    auto dmaStoreOp = cast<kestrel::DMAStoreOp>(op);
+    auto dmaStoreOp = cast<kestrel::DMAStoreWithResultOp>(op);
     FailureOr<Value> srcMemref =
         getBuffer(rewriter, dmaStoreOp.getSource(), options);
     if (failed(srcMemref))
@@ -97,7 +97,7 @@ struct DMAStoreOpInterface
     if (failed(resultMemrefType))
       return failure();
 
-    auto newOp = rewriter.create<kestrel::DMAStoreOp>(
+    auto newOp = rewriter.create<kestrel::DMAStoreWithResultOp>(
         dmaStoreOp->getLoc(), llvm::cast<MemRefType>(*resultMemrefType),
         *srcMemref,
         *dstMemref,
@@ -166,7 +166,7 @@ struct AiceMatMulOpInterface
 void mlir::kestrel::registerBufferizableOpInterfaceExternalModels(DialectRegistry &registry) {
   registry.addExtension(+[](MLIRContext *ctx, kestrel::KestrelDialect *dialect){
     DMALoadOp::attachInterface<DMALoadOpInterface>(*ctx);
-    DMAStoreOp::attachInterface<DMAStoreOpInterface>(*ctx);
+    DMAStoreWithResultOp::attachInterface<DMAStoreWithResultOpInterface>(*ctx);
     AiceMatMulOp::attachInterface<AiceMatMulOpInterface>(*ctx);
   });
 }
