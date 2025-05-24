@@ -4,6 +4,7 @@ add_mlir_library(
   KestrelOps.cpp
   KestrelTransformOps.cpp
   ConvertLinalgToAice.cpp
+  PostProcessAfterBufferization.cpp
   BufferizableOpInterfaceImpl.cpp
 
   ADDITIONAL_HEADER_DIRS

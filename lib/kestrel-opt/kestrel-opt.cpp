@@ -32,6 +32,7 @@ int main(int argc, char **argv) {
   mlir::registerCSEPass();
   mlir::registerSymbolDCEPass();
   mlir::registerConvertLinalgToAicePass();
+  mlir::registerPostProcessAfterBufferizationPass();
   mlir::bufferization::registerOneShotBufferizePass();
   ::mlir::registerPass([]() -> std::unique_ptr<::mlir::Pass> {
     return ::mlir::createLinalgBlockPackMatmul();

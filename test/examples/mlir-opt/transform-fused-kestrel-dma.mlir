@@ -1,4 +1,4 @@
-// RUN: kestrel-opt %s --transform-interpreter --split-input-file -canonicalize -cse -kestrel-convert-linalg-to-aice | FileCheck %s
+// RUN: kestrel-opt %s -kestrel-convert-linalg-to-aice="load-only" --kestrel-post-process-after-bufferization="load-only" --transform-interpreter --split-input-file -canonicalize -cse | FileCheck %s
 #map = affine_map<(d0, d1) -> (d0, d1)>
 #map1 = affine_map<(d0, d1) -> (0, d1)>
 
@@ -80,6 +80,13 @@ module {
       : (!transform.any_op) -> !transform.any_op
       transform.yield
     }
+
+    transform.named_sequence @kestrel_func_2(%arg0: !transform.any_op {transform.consumed}) {
+      %1 = transform.apply_registered_pass "kestrel-post-process-after-bufferization" to %arg0 {options = "load-only=0"}
+      : (!transform.any_op) -> !transform.any_op
+      transform.yield
+    }
+
     transform.named_sequence @do_nothing(%arg0: !transform.any_op {transform.readonly}) {
       transform.yield
     }
@@ -94,8 +101,11 @@ module {
       %1 = transform.bufferization.one_shot_bufferize %result { bufferize_function_boundaries = true }
            : (!transform.any_op) -> !transform.any_op
 
-      transform.include @__transform_step2 failures(propagate) (%1) : (!transform.any_op) -> ()
+      %2 = transform.foreach_match in %1
+                  @match_func -> @kestrel_func_2
+                  : (!transform.any_op) -> !transform.any_op
 
+      transform.include @__transform_step2 failures(propagate) (%2) : (!transform.any_op) -> ()
 
       transform.yield
     }
