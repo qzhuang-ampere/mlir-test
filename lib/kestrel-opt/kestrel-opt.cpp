@@ -26,11 +26,13 @@ int main(int argc, char **argv) {
   registerKestrelTransformOps(registry);
 
   // Register transform interpreter pass. for the cmd line option
+  // Registering doens't mean loading.
   mlir::transform::registerInterpreterPass();
   mlir::registerCanonicalizerPass();
   mlir::registerCSEPass();
   mlir::registerSymbolDCEPass();
   mlir::registerConvertLinalgToAicePass();
+  mlir::registerPostProcessAfterBufferizationPass();
   mlir::bufferization::registerOneShotBufferizePass();
   ::mlir::registerPass([]() -> std::unique_ptr<::mlir::Pass> {
     return ::mlir::createLinalgBlockPackMatmul();

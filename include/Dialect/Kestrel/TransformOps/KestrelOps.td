@@ -88,7 +88,7 @@ def DMAParallelStoreOp : KestrelOp<"dma.parallel_store", [
 
 }
 
-def DMAStoreOp : KestrelOp<"dma.store", [
+def DMAStoreWithResultOp : KestrelOp<"dma.store_with_result", [
     AttrSizedOperandSegments,
     TypesMatchWith<"expected result type to match dest type",
                    "dest", "result", "$_self">]> {
@@ -106,6 +106,33 @@ def DMAStoreOp : KestrelOp<"dma.store", [
                        DenseI64ArrayAttr:$static_sizes,
                        DenseI64ArrayAttr:$static_strides);
   let results = (outs AnyType : $result);
+
+  let assemblyFormat = [{
+    $source `into` $dest ``
+    custom<DynamicIndexList>($offsets, $static_offsets)
+    custom<DynamicIndexList>($sizes, $static_sizes)
+    custom<DynamicIndexList>($strides, $static_strides)
+    attr-dict `:` type($source) `to` type($dest)
+  }];
+}
+
+def DMAStoreOp : KestrelOp<"dma.store", [
+    AttrSizedOperandSegments]> {
+  let summary = "DMA store operation";
+  let description = [{
+    This operation performs a DMA store from a specified buffer to memory.
+  }];
+
+  let arguments = (ins Arg<AnyRankedOrUnrankedMemRef, "the source memref",
+                        [MemReadAt<0, FullEffect>]>:$source,
+                       Arg<AnyRankedOrUnrankedMemRef, "the target memref",
+                         [MemWriteAt<1, FullEffect>]>:$dest,
+                       Variadic<Index>:$offsets,
+                       Variadic<Index>:$sizes,
+                       Variadic<Index>:$strides,
+                       DenseI64ArrayAttr:$static_offsets,
+                       DenseI64ArrayAttr:$static_sizes,
+                       DenseI64ArrayAttr:$static_strides);
 
   let assemblyFormat = [{
     $source `into` $dest ``

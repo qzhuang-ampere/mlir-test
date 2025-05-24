@@ -10,7 +10,7 @@
 #include "llvm/Support/Debug.h"
 #include "mlir/Dialect/Utils/StaticValueUtils.h"
 
-#define DEBUG_TYPE "kestrel-pass"
+#define DEBUG_TYPE "kestrel-convert-linalg-to-aice-pass"
 
 namespace mlir {
   #define GEN_PASS_DEF_CONVERTLINALGTOAICE
@@ -18,10 +18,17 @@ namespace mlir {
 } // namespace mlir
 
 using namespace mlir;
+using namespace mlir::kestrel;
+
 namespace {
 class ConvertLinalgToAicePass
     : public impl::ConvertLinalgToAiceBase<ConvertLinalgToAicePass> {
+  using Base::Base;
+
   void runOnOperation() override;
+
+private:
+
 };
 }
 
@@ -63,8 +70,8 @@ struct TensorInsertSliceToDMAStore : public OpConversionPattern<tensor::InsertSl
   matchAndRewrite(tensor::InsertSliceOp op, OpAdaptor adaptor,
                   ConversionPatternRewriter &rewriter) const override {
 
-    // Create a new DMAStoreOp with the same attributes as the original.
-    auto newOp = rewriter.create<kestrel::DMAStoreOp>(
+    // Create a new DMAStoreWithResultOp with the same attributes as the original.
+    auto newOp = rewriter.create<kestrel::DMAStoreWithResultOp>(
         op.getLoc(), op.getResultType(), op.getSource(), op.getDest(), op.getOffsets(),
         op.getStrides(), op.getSizes(), op.getStaticOffsets(),
         op.getStaticStrides(), op.getStaticSizes());
@@ -102,6 +109,14 @@ void populateGlobalTensorMoveToDMAConversionPatterns(
 }
 
 void ConvertLinalgToAicePass::runOnOperation() {
+  if (loadOnly == true) {
+    llvm::dbgs() << "ConvertLinalgToAicePass: Load into context only, not doing anything\n";
+    return;
+  }
+  else {
+    llvm::dbgs() << "ConvertLinalgToAicePass: executing pass\n";
+  }
+
   RewritePatternSet patterns(&getContext());
   populateLinalgToAiceConversionPatterns(patterns);
 
@@ -113,11 +128,11 @@ void ConvertLinalgToAicePass::runOnOperation() {
   }
 
   auto module = getOperation();
-  if (llvm::isa<ModuleOp>(module) == false) {
-    llvm::errs() << "Error: Cannot apply ConvertLinalgToAice pass to an op which is not a ModuleOp\n";
+  if (llvm::isa<ModuleOp>(module) == false && llvm::isa<mlir::func::FuncOp>(module) == false) {
+    llvm::errs() << "Error: Cannot apply ConvertLinalgToAice pass to an op which is not a ModuleOp for FuncOp\n";
   }
 
-  // Loop all FuncOps in the module and print their names.
+  // Loop all FuncOps in the module
   module->walk([&](Operation *opPtr) {
     if (auto function = mlir::dyn_cast<func::FuncOp>(opPtr)) {
       if (function.getName().starts_with(kestrel::kConnorFunctionPrefix) ||

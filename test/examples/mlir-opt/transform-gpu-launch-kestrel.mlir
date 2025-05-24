@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s -one-shot-bufferize="copy-before-write bufferize-function-boundaries unknown-type-conversion=identity-layout-map" --transform-interpreter --split-input-file -canonicalize -cse | FileCheck %s
+// RUN: kestrel-opt %s -one-shot-bufferize="copy-before-write bufferize-function-boundaries unknown-type-conversion=identity-layout-map" --transform-interpreter --split-input-file -canonicalize -cse | FileCheck %s
 // -linalg-block-pack-matmul="block-factors=32,16,64 lhs-transpose-outer-blocks=false lhs-transpose-inner-blocks=false rhs-transpose-outer-blocks=true rhs-transpose-inner-blocks=true" -canonicalize
 #map = affine_map<(d0, d1) -> (0, d1)>
 #map1 = affine_map<(d0) -> (d0 * 64)>
@@ -124,7 +124,7 @@ module {
 
       %for_alls = transform.structured.match ops{["scf.forall"]} in %arg1 : (!transform.any_op) -> !transform.any_op
       //transform.print %for_alls : !transform.any_op
-      //transform.foreach  %for_alls : !transform.any_op {
+      transform.foreach  %for_alls : !transform.any_op {
       ^bb1(%for_all : !transform.any_op):
         %gpuLaunch = transform.gpu.map_forall_to_blocks %for_all { generate_gpu_launch } : (!transform.any_op) -> !transform.any_op
       }

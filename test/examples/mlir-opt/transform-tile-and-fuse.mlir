@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s --transform-interpreter --split-input-file -canonicalize -cse --one-shot-bufferize="copy-before-write unknown-type-conversion=identity-layout-map" -canonicalize -cse  | FileCheck %s
+// RUN: kestrel-opt %s --transform-interpreter --split-input-file -canonicalize -cse --one-shot-bufferize="copy-before-write unknown-type-conversion=identity-layout-map" -canonicalize -cse  | FileCheck %s
 
 // This is a simple tile-and-fuse example with a single fusion group.
 

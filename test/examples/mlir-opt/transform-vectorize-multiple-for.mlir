@@ -1,4 +1,4 @@
-// RUN: mlir-opt %s --transform-interpreter --split-input-file -canonicalize -cse -kestrel-convert-linalg-to-aice | FileCheck %s
+// RUN: kestrel-opt %s --transform-interpreter --split-input-file -canonicalize -cse -kestrel-convert-linalg-to-aice | FileCheck %s
 
 // This is a simple tile-and-fuse example with a single fusion group.
 

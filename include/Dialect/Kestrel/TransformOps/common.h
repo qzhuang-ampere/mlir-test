@@ -7,6 +7,7 @@ namespace kestrel {
 
 constexpr const char *kConnorFunctionPrefix = "func_Connor";
 constexpr const char *kAiceFunctionPrefix = "func_Aice";
+constexpr const char *kMainFunctionName = "main";
 
 }
 }
