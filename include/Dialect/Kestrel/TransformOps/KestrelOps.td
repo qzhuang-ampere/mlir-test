@@ -6,9 +6,11 @@
 #define KESTREL_OPS
 
 include "mlir/IR/OpBase.td"
+include "mlir/IR/AttrTypeBase.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 include "mlir/Interfaces/DestinationStyleOpInterface.td"
 include "mlir/Interfaces/ViewLikeInterface.td"
+include "mlir/IR/EnumAttr.td"
 
 def KestrelDialect : Dialect {
   let name = "kestrel";
@@ -22,6 +24,28 @@ def KestrelDialect : Dialect {
 
 class KestrelOp<string mnemonic, list<Trait> traits = []> :
     Op<KestrelDialect, mnemonic, traits>;
+
+def Kestrel_ReductionKind : I32EnumAttr<"ReductionKind",
+  "Reduction of an iterator/mesh dimension.", [
+  I32EnumAttrCase<"Sum", 1, "sum">,
+  I32EnumAttrCase<"Max", 2, "max">,
+  I32EnumAttrCase<"Min", 3, "min">,
+  I32EnumAttrCase<"Product", 4, "product">,
+  I32EnumAttrCase<"Average", 5, "average">,
+  I32EnumAttrCase<"BitwiseAnd", 6, "bitwise_and">,
+  I32EnumAttrCase<"BitwiseOr", 7, "bitwise_or">,
+  I32EnumAttrCase<"BitwiseXor", 8, "bitwise_xor">,
+  I32EnumAttrCase<"Generic", 100, "generic">
+]> {
+  let genSpecializedAttr = 0;
+  let cppNamespace = "::mlir::kestrel";
+}
+
+def Kestrel_ReductionKindAttr : EnumAttr<KestrelDialect, Kestrel_ReductionKind, "partial"> {
+  let assemblyFormat = "$value";
+}
+
+def Kestrel_MeshAxesAttr : DenseArrayAttrBase<"DenseI16ArrayAttr", "int16_t", "i16">;
 
 def AiceMatMulOp : KestrelOp<"aice_matmul"> {
   let summary = "AICE matrix multiplication operation";
@@ -140,6 +164,52 @@ def DMAStoreOp : KestrelOp<"dma.store", [
     custom<DynamicIndexList>($sizes, $static_sizes)
     custom<DynamicIndexList>($strides, $static_strides)
     attr-dict `:` type($source) `to` type($dest)
+  }];
+}
+
+def DMAReduceOp : KestrelOp<"dma.reduce", [
+    AttrSizedOperandSegments]> {
+  let summary = "DMA reduce operation";
+  let description = [{
+    This operation performs a DMA reduction from a specified buffer to memory.
+  }];
+
+  let arguments = (ins AnyType : $source,
+                       AnyType : $dest,
+                       Variadic<Index>:$offsets,
+                       Variadic<Index>:$sizes,
+                       Variadic<Index>:$strides,
+                       DenseI64ArrayAttr:$static_offsets,
+                       DenseI64ArrayAttr:$static_sizes,
+                       DenseI64ArrayAttr:$static_strides);
+  let results = (outs);
+
+  let assemblyFormat = [{
+    $source `into` $dest ``
+    custom<DynamicIndexList>($offsets, $static_offsets)
+    custom<DynamicIndexList>($sizes, $static_sizes)
+    custom<DynamicIndexList>($strides, $static_strides)
+    attr-dict `:` type($source) `to` type($dest)
+  }];
+}
+
+def Kestrel_AllReduceOp : KestrelOp<"all_reduce", [
+    Pure,
+    SameOperandsAndResultShape]> {
+  let summary = "All-reduce operation";
+  let description = [{
+    This operation performs an all-reduce operation on the input tensor
+    across a device mesh.
+  }];
+
+  let arguments = (ins AnyType : $input,
+                       DefaultValuedAttr<Kestrel_MeshAxesAttr, "{}">: $mesh_axes,
+                       DefaultValuedAttr<Kestrel_ReductionKindAttr, "mlir::kestrel::ReductionKind::Sum"> : $reduction);
+  let results = (outs AnyType : $result);
+
+  let assemblyFormat = [{
+    `all_reduce` $input `reduction` $reduction attr-dict `:`
+     type($input) `->` type($result)
   }];
 }
 

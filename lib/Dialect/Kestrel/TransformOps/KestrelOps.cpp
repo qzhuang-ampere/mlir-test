@@ -15,6 +15,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/TypeSwitch.h"
 #include "llvm/Support/Casting.h"
 #include "mlir/Dialect/Bufferization/IR/BufferizableOpInterface.h"
 
@@ -31,3 +32,8 @@ declarePromisedInterfaces<
 
 #define GET_OP_CLASSES
 #include "KestrelOps.cpp.inc"
+
+#define GET_ATTRDEF_CLASSES
+#include "KestrelAttributes.cpp.inc"
+
+#include "KestrelEnums.cpp.inc"
