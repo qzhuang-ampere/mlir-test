@@ -13,6 +13,11 @@
 
 #include "KestrelDialect.h.inc"
 
+#include "KestrelEnums.h.inc"
+
+#define GET_ATTRDEF_CLASSES
+#include "KestrelAttributes.h.inc"
+
 #define GET_OP_CLASSES
 #include "KestrelOps.h.inc"
 

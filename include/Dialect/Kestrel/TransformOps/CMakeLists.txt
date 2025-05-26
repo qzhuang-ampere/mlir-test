@@ -1,4 +1,8 @@
 set(LLVM_TARGET_DEFINITIONS KestrelOps.td)
+mlir_tablegen(KestrelAttributes.h.inc -gen-attrdef-decls)
+mlir_tablegen(KestrelAttributes.cpp.inc -gen-attrdef-defs)
+mlir_tablegen(KestrelEnums.h.inc -gen-enum-decls)
+mlir_tablegen(KestrelEnums.cpp.inc -gen-enum-defs)
 mlir_tablegen(KestrelOps.h.inc -gen-op-decls)
 mlir_tablegen(KestrelOps.cpp.inc -gen-op-defs)
 mlir_tablegen(KestrelDialect.h.inc -gen-dialect-decls)
