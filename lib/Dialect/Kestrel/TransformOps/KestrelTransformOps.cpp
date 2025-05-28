@@ -131,6 +131,53 @@ static scf::ExecuteRegionOp wrapInExecuteRegion(RewriterBase &b,
   return DiagnosedSilenceableFailure::success();
 }
 
+scf::ForallOp mergeInnerScfForAll(
+    ::mlir::RewriterBase &rewriter, scf::ForallOp forallOp) {
+  if (forallOp.getNumOperands() != 1)
+    return nullptr;
+
+  auto newForallOp = rewriter.create<scf::ForallOp>(
+    forallOp.getLoc(), forallOp.getMixedLowerBound(),
+    forallOp.getMixedUpperBound(), forallOp.getMixedStep(), forallOp.getOutputs(),
+    forallOp.getMapping(),
+    /*bodyBuilderFn =*/[](OpBuilder &, Location, ValueRange) {});
+
+  rewriter.inlineRegionBefore(forallOp.getRegion(), newForallOp.getRegion(),
+                              newForallOp.getRegion().end());
+  rewriter.replaceOp(forallOp, newForallOp);
+  return newForallOp;
+}
+
+::mlir::DiagnosedSilenceableFailure mlir::transform::MergeInnerScfForAll::apply(
+    ::mlir::transform::TransformRewriter &rewriter,
+    ::mlir::transform::TransformResults &results,
+    ::mlir::transform::TransformState &state) {
+
+  auto target = getTarget();
+  SmallVector<Operation *> mergedOps;
+  for (Operation *targetOp : state.getPayloadOps(getTarget())) {
+    Location location = targetOp->getLoc();
+    scf::ForallOp forallOp = dyn_cast<scf::ForallOp>(targetOp);
+    if (!forallOp) {
+      DiagnosedSilenceableFailure diag = emitSilenceableError()
+                                         << "expected scf.forall op";
+      diag.attachNote(targetOp->getLoc()) << "target op";
+      return diag;
+    }
+
+    scf::ForallOp merged = mergeInnerScfForAll(rewriter, forallOp);
+    if (!merged) {
+      DiagnosedSilenceableFailure diag = emitSilenceableError()
+                                         << "failed to merge inner scf.forall";
+      diag.attachNote(location) << "target op";
+      return diag;
+    }
+    mergedOps.push_back(merged);
+  }
+  results.set(cast<OpResult>(getMergedForall()), mergedOps);
+  return DiagnosedSilenceableFailure::success();
+}
+
 void registerKestrelTransformOps(::mlir::DialectRegistry &registry) {
   registry.addExtensions<KestrelTransformOps>();
 }

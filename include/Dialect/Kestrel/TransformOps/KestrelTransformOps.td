@@ -33,4 +33,20 @@ def OutlineWithUniqName : Op<Transform_Dialect, "kestrel.loop.outline_with_uniq_
   let assemblyFormat = "$target attr-dict `:` functional-type(operands, results)";
 }
 
+def MergeInnerScfForAll : Op<Transform_Dialect, "kestrel.loop.merge_inner_scf_for_all",
+    [FunctionalStyleTransformOpTrait, MemoryEffectsOpInterface,
+     DeclareOpInterfaceMethods<TransformOpInterface>]> {
+  let summary = "Merges inner scf.forall operations into a single scf.forall";
+  let description = [{
+    Merges all inner scf.forall operations into a single scf.forall operation.
+    This is useful for optimizing the loop structure and reducing the number of
+    nested loops in the generated code.
+  }];
+
+  let arguments = (ins TransformHandleTypeInterface:$target);
+
+  let results = (outs TransformHandleTypeInterface:$merged_forall);
+
+  let assemblyFormat = "$target attr-dict `:` functional-type(operands, results)";
+}
 #endif // KESTREL_TRANSFORM_OPS

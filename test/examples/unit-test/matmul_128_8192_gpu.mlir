@@ -36,10 +36,10 @@ module {
 
   module attributes {transform.with_named_sequence} {
     transform.named_sequence @__transform_main(%arg1: !transform.any_op {transform.readonly}) {
-      %0 = transform.structured.match ops{["linalg.matmul"]} in %arg1 : (!transform.any_op) -> !transform.any_op
-      %1, %2, %3, %loop = transform.structured.tile_reduction_using_forall %0
-        by num_threads = [0, 0, 2], tile_sizes = [], mapping = [#gpu.block<x>] : (!transform.any_op) -> (!transform.any_op, !transform.any_op, !transform.any_op, !transform.any_op)
-        transform.yield
+      %0 = transform.structured.match ops{["scf.forall"]} in %arg1 : (!transform.any_op) -> !transform.any_op
+      %1 = transform.kestrel.loop.merge_inner_scf_for_all %0 : (!transform.any_op) -> !transform.any_op
+
+      transform.yield
     }
   }
 }
