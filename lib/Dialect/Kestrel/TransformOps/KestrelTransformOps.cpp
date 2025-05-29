@@ -286,10 +286,31 @@ scf::ForallOp mergeInnerScfForAll(
           continue;
         }
         else {
-          if (llvm::isa<linalg::MatmulOp>(op1)) {
-            gemmOutput = op1.getResult(0);
-          }
           rewriter.moveOpBefore(&op1, yieldOp.getOperation());
+
+          // 1. mark output for later usage by the reduce op
+          // 2. the defining op of the rhs and the grandparent op can be merged into one op
+          if (llvm::isa<linalg::MatmulOp>(op1)) {
+            auto matmulOp = llvm::cast<linalg::MatmulOp>(op1);
+            gemmOutput = matmulOp.getResult(0);
+            auto rhsOp = llvm::cast<tensor::ExtractSliceOp>(matmulOp.getOperand(1).getDefiningOp());
+            auto grandParentOp = llvm::cast<tensor::ExtractSliceOp>(rhsOp.getOperand(0).getDefiningOp());
+
+            auto newMixedOffsets = rhsOp.getMixedOffsets();
+            newMixedOffsets[1] = grandParentOp.getMixedOffsets()[1];
+
+            auto oldInsertionPoint = rewriter.saveInsertionPoint();
+            rewriter.setInsertionPoint(matmulOp);
+            auto mergedExtractSliceOp = rewriter.create<tensor::ExtractSliceOp>(
+                rhsOp.getLoc(), grandParentOp.getSource(),
+                newMixedOffsets, rhsOp.getMixedSizes(),
+                rhsOp.getMixedStrides());
+
+            rewriter.restoreInsertionPoint(oldInsertionPoint);
+            rhsOp.replaceAllUsesWith(mergedExtractSliceOp.getResult());
+            rhsOp.erase();
+            grandParentOp.erase();
+          }
         }
       }
       continue;
