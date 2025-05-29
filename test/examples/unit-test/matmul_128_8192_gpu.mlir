@@ -1,4 +1,4 @@
-// RUN: kestrel-opt --transform-interpreter --split-input-file -canonicalize -cse %s | FileCheck %s
+// RUN: kestrel-opt -kestrel-convert-linalg-to-aice="load-only" --kestrel-post-process-after-bufferization="load-only" --transform-interpreter --split-input-file -canonicalize -cse %s | FileCheck %s
 #map = affine_map<(d0) -> (d0 * 128)>
 #map1 = affine_map<(d0) -> (d0 * 4096)>
 module {
@@ -40,13 +40,16 @@ module {
       transform.yield
     }
 
-    transform.named_sequence @__transform_main(%arg1: !transform.any_op {transform.readonly}) {
+    transform.named_sequence @__transform_main(%arg1: !transform.any_op {transform.consumed}) {
       %0 = transform.structured.match ops{["scf.forall"]} in %arg1 : (!transform.any_op) -> !transform.any_op
 
       transform.foreach  %0 : !transform.any_op {
       ^bb1(%each : !transform.any_op):
         transform.include @__merge_scf_forall failures(suppress) (%each) : (!transform.any_op) -> ()
       }
+
+      %1 = transform.bufferization.one_shot_bufferize %arg1 { bufferize_function_boundaries = true }
+           : (!transform.any_op) -> !transform.any_op
 
       transform.yield
     }

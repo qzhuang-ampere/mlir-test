@@ -210,8 +210,8 @@ scf::ForallOp mergeInnerScfForAll(
   auto outerInductionVar1 = newForallOp.getInductionVars()[1];
 
   rewriter.setInsertionPointToStart(newForallOp.getBody());
-  auto intVal = rewriter.create<arith::ConstantIntOp>(
-      forallOp.getLoc(), innerUbVal, rewriter.getIntegerType(64));
+  auto intVal = rewriter.create<arith::ConstantIndexOp>(
+      forallOp.getLoc(), innerUbVal);
 
   auto divOp = rewriter.create<arith::DivUIOp>(
       forallOp.getLoc(), outerInductionVar1, intVal);
@@ -247,7 +247,8 @@ scf::ForallOp mergeInnerScfForAll(
   Block *oldBody = forallOp.getBody();
   Block *newBody = newForallOp.getBody();
   auto innerOutType = innerForallOp.getRegionOutArgs()[0];
-
+  auto outerOut = forallOp.getRegionOutArgs()[0];
+  auto newOut = newForallOp.getRegionOutArgs()[0];
 
   rewriter.setInsertionPoint(yieldOp);
 
@@ -255,15 +256,16 @@ scf::ForallOp mergeInnerScfForAll(
   auto oldInnerInductionVar = innerForallOp.getInductionVars()[0];
   oldOutInductionVar.replaceAllUsesWith(divOp.getResult());
   oldInnerInductionVar.replaceAllUsesWith(moduloOp.getResult());
+  outerOut.replaceAllUsesWith(newOut);
 
   // get the innerForallOp's body, then get the first op in the body
   auto firstOp = *(innerForallOp.getBody()->getOps<tensor::ExtractSliceOp>().begin());
   firstOp.getResult().replaceAllUsesWith(newLinalgFill.getResult(0));
 
-
+  Value outputForReduce = nullptr;
+  Value gemmOutput = nullptr;
   for (auto &op : llvm::make_early_inc_range(*oldBody)) {
     // Do not move the terminator (scf.yield), as the new op already has one
-    op.dump();
     if (llvm::isa<scf::YieldOp>(op))
       continue;
 
@@ -284,6 +286,9 @@ scf::ForallOp mergeInnerScfForAll(
           continue;
         }
         else {
+          if (llvm::isa<linalg::MatmulOp>(op1)) {
+            gemmOutput = op1.getResult(0);
+          }
           rewriter.moveOpBefore(&op1, yieldOp.getOperation());
         }
       }
@@ -323,10 +328,8 @@ scf::ForallOp mergeInnerScfForAll(
       llvm::SmallVector<int64_t> staticSizes;
       dispatchIndexOpFoldResults(sizes, dynamicSizes,
                                  staticSizes);
-
       auto result = rewriter.create<kestrel::DMAReduceOp>(forallOp.getLoc(),
-                                                          dst.getType(),
-                                                          src,
+                                                          gemmOutput,
                                                           dst,
                                                           dynamicOffsets,
                                                       dynamicStrides,
@@ -335,38 +338,24 @@ scf::ForallOp mergeInnerScfForAll(
                                                       staticStrides,
                                                       staticSizes);
 
-      reduceOp.getResult(0).replaceAllUsesWith(result->getResult(0));
+      reduceOp.getResult(0).replaceAllUsesWith(outputForReduce);
+      continue;
     }
     else {
+      if (llvm::isa<tensor::ExtractSliceOp>(op) && op.getOperand(0) == newOut) {
+        outputForReduce = op.getResult(0);
+      }
       rewriter.moveOpBefore(&op, yieldOp.getOperation());
     }
   }
   // rewriter.inlineRegionBefore(forallOp.getRegion(), newForallOp.getRegion(),
   //                             newForallOp.getRegion().end());
-
-
-  // move all the innerForallOp's body operations to the outer forallOp
-  // and remove the innerForallOp
-  for (Operation &op : innerForallOp.getBody()->getOperations()) {
-    auto newOp = rewriter.clone(op);
-    rewriter.insert(newOp);
-  }
-  // remove the innerForallOp
-  rewriter.eraseOp(innerForallOp);
-
-  if (forallOp.getMapping().value().size() != 1) {
-    llvm::dbgs() << forallOp << "expected single mapping\n";
-    return nullptr;
-  }
-
-  // Create a new forallOp with the same bounds, outputs, and mapping as the outer forallOp
-  // but with an empty body
-  // Note: The new forallOp will have the same location as the outer forallOp
-  // and will be inserted at the same point in the IR
-  // as the outer forallOp, so it will replace the outer forallOp in the IR
-
-
-
+  // forallOp.getResult(0).replaceAllUsesWith(newForallOp.getResult(0));
+  // for (auto u : forallOp->getUsers()) {
+  //   u->dump();
+  // }
+  // Todo: remove all yieldOps with block->end()
+  yieldOp.erase();
   rewriter.replaceOp(forallOp, newForallOp);
   return newForallOp;
 }
