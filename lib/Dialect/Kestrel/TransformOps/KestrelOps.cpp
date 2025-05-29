@@ -27,7 +27,7 @@ void ::mlir::kestrel::KestrelDialect::initialize() {
 #include "KestrelOps.cpp.inc"
       >();
 declarePromisedInterfaces<
-    bufferization::BufferizableOpInterface, DMALoadOp, DMAStoreWithResultOp, AiceMatMulOp>();
+    bufferization::BufferizableOpInterface, DMALoadOp, DMAStoreWithResultOp, AiceMatMulOp, DMAReduceOp>();
 }
 
 #define GET_OP_CLASSES

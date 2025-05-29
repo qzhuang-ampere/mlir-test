@@ -42,7 +42,7 @@ struct LinalgMatmulToAiceMatul : public OpConversionPattern<linalg::MatmulOp> {
 
     // Create a new AiceMatMulOp with the same attributes as the original.
     auto newOp = rewriter.create<kestrel::AiceMatMulOp>(
-        op.getLoc(), op.getResultTypes(), op.getInputs()[0], op.getInputs()[1]);
+        op.getLoc(), op.getResultTypes(), op.getInputs()[0], op.getInputs()[1], op.getOutputs()[0]);
     rewriter.replaceOp(op, newOp);
     return success();
   }

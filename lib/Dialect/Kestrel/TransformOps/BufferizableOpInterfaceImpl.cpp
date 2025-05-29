@@ -145,6 +145,11 @@ struct AiceMatMulOpInterface
     if (failed(rhsMemref))
       return failure();
 
+    FailureOr<Value> outMemref =
+        getBuffer(rewriter, aiceMatMulOp.getOut(), options);
+    if (failed(outMemref))
+      return failure();
+
     auto resultMemrefType =
         bufferization::getBufferType(aiceMatMulOp.getResult(), options);
     if (failed(resultMemrefType))
@@ -153,9 +158,54 @@ struct AiceMatMulOpInterface
     // Create a new AiceMatMulOp with the bufferized operands.
     auto newOp = rewriter.create<kestrel::AiceMatMulOp>(
         op->getLoc(), llvm::cast<MemRefType>(*resultMemrefType), *lhsMemref,
-        *rhsMemref);
+        *rhsMemref, *outMemref);
 
     replaceOpWithBufferizedValues(rewriter, op, newOp.getResult());
+    return success();
+  }
+};
+
+struct DMAReduceOpInterface
+    : public BufferizableOpInterface::ExternalModel<DMAReduceOpInterface,
+                                                    kestrel::DMAReduceOp> {
+  bool bufferizesToMemoryRead(Operation *op, OpOperand &opOperand,
+                              const AnalysisState &state) const {
+    return true;
+  }
+
+  bool bufferizesToMemoryWrite(Operation *op, OpOperand &opOperand,
+                               const AnalysisState &state) const {
+    return true;
+  }
+
+  AliasingValueList getAliasingValues(Operation *op, OpOperand &opOperand,
+                                      const AnalysisState &state) const {
+    return {};
+  }
+
+  LogicalResult bufferize(Operation *op, RewriterBase &rewriter,
+                          const BufferizationOptions &options) const {
+    auto dmaReduceOp = cast<kestrel::DMAReduceOp>(op);
+    FailureOr<Value> srcMemref =
+        getBuffer(rewriter, dmaReduceOp.getSource(), options);
+    if (failed(srcMemref))
+      return failure();
+
+    FailureOr<Value> dstMemref =
+        getBuffer(rewriter, dmaReduceOp.getDest(), options);
+    if (failed(dstMemref))
+      return failure();
+
+    auto newOp = rewriter.create<kestrel::DMAReduceOp>(
+        dmaReduceOp->getLoc(), *srcMemref, *dstMemref,
+        dmaReduceOp.getOffsets(),
+        dmaReduceOp.getSizes(),
+        dmaReduceOp.getStrides(),
+        dmaReduceOp.getStaticOffsets(),
+        dmaReduceOp.getStaticSizes(),
+        dmaReduceOp.getStaticStrides());
+
+    rewriter.eraseOp(op);
     return success();
   }
 };
@@ -168,5 +218,6 @@ void mlir::kestrel::registerBufferizableOpInterfaceExternalModels(DialectRegistr
     DMALoadOp::attachInterface<DMALoadOpInterface>(*ctx);
     DMAStoreWithResultOp::attachInterface<DMAStoreWithResultOpInterface>(*ctx);
     AiceMatMulOp::attachInterface<AiceMatMulOpInterface>(*ctx);
+    DMAReduceOp::attachInterface<DMAReduceOpInterface>(*ctx);
   });
 }
