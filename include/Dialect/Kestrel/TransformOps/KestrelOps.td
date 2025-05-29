@@ -55,10 +55,11 @@ def AiceMatMulOp : KestrelOp<"aice_matmul"> {
   }];
 
   let arguments = (ins AnyType : $lhs,
-                       AnyType : $rhs);
+                       AnyType : $rhs,
+                       AnyType : $out);
   let results = (outs AnyType : $result);
 
-  let assemblyFormat = "$lhs `,` $rhs attr-dict `:` type($lhs) type($rhs) `->` type($result)";
+  let assemblyFormat = "$lhs `,` $rhs `,` $out attr-dict `:` type($lhs) type($rhs) type($out) `->` type($result)";
 }
 
 def DMALoadOp : KestrelOp<"dma.load", [

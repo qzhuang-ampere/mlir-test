@@ -42,16 +42,31 @@ struct MemrefSubViewCopyToDMAStore : public OpConversionPattern<memref::CopyOp> 
     MLIRContext *context = rewriter.getContext();
 
     auto prevOp = op.getTarget().getDefiningOp<memref::SubViewOp>();
-    if (!prevOp) {
-      return failure();
+    if (prevOp) {
+      auto newOp = rewriter.create<kestrel::DMAStoreOp>(
+          op.getLoc(), op.getSource(), prevOp.getSource(), prevOp.getOffsets(),
+          prevOp.getStrides(), prevOp.getSizes(), prevOp.getStaticOffsets(),
+          prevOp.getStaticStrides(), prevOp.getStaticSizes());
+
+      rewriter.replaceOp(op, newOp);
+    }
+    else {
+      // try again if the prevOp is Alloc
+      auto prevOp = op.getTarget().getDefiningOp<memref::AllocOp>();
+      if (prevOp) {
+        auto newOp = rewriter.create<kestrel::DMAStoreOp>(
+            op.getLoc(), op.getSource(), prevOp.getResult(), ValueRange(),
+            ValueRange(), ValueRange(), ArrayRef<int64_t>{}, ArrayRef<int64_t>{},
+            ArrayRef<int64_t>{});
+
+        rewriter.replaceOp(op, newOp);
+      }
+      else {
+        llvm::errs() << "Error: Cannot convert memref.copy to DMAStore, target is not a SubView or Alloc\n";
+        return failure();
+      }
     }
 
-    auto newOp = rewriter.create<kestrel::DMAStoreOp>(
-        op.getLoc(), op.getSource(), prevOp.getSource(), prevOp.getOffsets(),
-        prevOp.getStrides(), prevOp.getSizes(), prevOp.getStaticOffsets(),
-        prevOp.getStaticStrides(), prevOp.getStaticSizes());
-
-    rewriter.replaceOp(op, newOp);
     return success();
   }
 };
