@@ -35,9 +35,18 @@ module {
   }
 
   module attributes {transform.with_named_sequence} {
+    transform.named_sequence @__merge_scf_forall(%arg0: !transform.any_op {transform.consumed}) {
+      %1 = transform.kestrel.loop.merge_inner_scf_for_all %arg0 : (!transform.any_op) -> !transform.any_op
+      transform.yield
+    }
+
     transform.named_sequence @__transform_main(%arg1: !transform.any_op {transform.readonly}) {
       %0 = transform.structured.match ops{["scf.forall"]} in %arg1 : (!transform.any_op) -> !transform.any_op
-      %1 = transform.kestrel.loop.merge_inner_scf_for_all %0 : (!transform.any_op) -> !transform.any_op
+
+      transform.foreach  %0 : !transform.any_op {
+      ^bb1(%each : !transform.any_op):
+        transform.include @__merge_scf_forall failures(suppress) (%each) : (!transform.any_op) -> ()
+      }
 
       transform.yield
     }
