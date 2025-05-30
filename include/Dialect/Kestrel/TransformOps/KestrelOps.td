@@ -169,6 +169,7 @@ def DMAStoreOp : KestrelOp<"dma.store", [
 }
 
 def DMAReduceOp : KestrelOp<"dma.reduce", [
+    DestinationStyleOpInterface,
     AttrSizedOperandSegments]> {
   let summary = "DMA reduce operation";
   let description = [{
@@ -183,14 +184,18 @@ def DMAReduceOp : KestrelOp<"dma.reduce", [
                        DenseI64ArrayAttr:$static_offsets,
                        DenseI64ArrayAttr:$static_sizes,
                        DenseI64ArrayAttr:$static_strides);
-  let results = (outs);
+  let results = (outs Variadic<AnyType> : $results);
 
   let assemblyFormat = [{
-    $source `into` $dest ``
+    $source `into` $dest
     custom<DynamicIndexList>($offsets, $static_offsets)
     custom<DynamicIndexList>($sizes, $static_sizes)
     custom<DynamicIndexList>($strides, $static_strides)
-    attr-dict `:` type($source) `to` type($dest)
+    attr-dict `:` type($source) `to` type($dest) `->` type($results)
+  }];
+
+  let extraClassDeclaration = [{
+    MutableOperandRange getDpsInitsMutable() { return getDestMutable(); }
   }];
 }
 

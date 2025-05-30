@@ -5,6 +5,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "include/Dialect/Kestrel/TransformOps/BufferizableOpInterfaceImpl.h"
+#include "mlir/Dialect/Bufferization/IR/DstBufferizableOpInterfaceImpl.h"
 #include "include/Dialect/Kestrel/TransformOps/KestrelOps.h"
 #include "mlir/Dialect/Bufferization/IR/BufferizableOpInterface.h"
 #include "llvm/Support/Debug.h"
@@ -166,7 +167,7 @@ struct AiceMatMulOpInterface
 };
 
 struct DMAReduceOpInterface
-    : public BufferizableOpInterface::ExternalModel<DMAReduceOpInterface,
+    : public DstBufferizableOpInterfaceExternalModel<DMAReduceOpInterface,
                                                     kestrel::DMAReduceOp> {
   bool bufferizesToMemoryRead(Operation *op, OpOperand &opOperand,
                               const AnalysisState &state) const {
@@ -178,10 +179,16 @@ struct DMAReduceOpInterface
     return true;
   }
 
-  AliasingValueList getAliasingValues(Operation *op, OpOperand &opOperand,
-                                      const AnalysisState &state) const {
-    return {};
-  }
+  // AliasingValueList getAliasingValues(Operation *op, OpOperand &opOperand,
+  //                                     const AnalysisState &state) const {
+  //   auto reductionOp = llvm::cast<kestrel::DMAReduceOp>(op);
+  //   if (reductionOp.getDestMutable() == opOperand) {
+  //     return {{op->getOpResult(0), BufferRelation::Equivalent}};
+  //   }
+  //   else {
+  //     return {};
+  //   }
+  // }
 
   LogicalResult bufferize(Operation *op, RewriterBase &rewriter,
                           const BufferizationOptions &options) const {
@@ -196,8 +203,14 @@ struct DMAReduceOpInterface
     if (failed(dstMemref))
       return failure();
 
+    auto resultMemrefType =
+        bufferization::getBufferType(dmaReduceOp.getResults()[0], options);
+    if (failed(resultMemrefType))
+      return failure();
+
     auto newOp = rewriter.create<kestrel::DMAReduceOp>(
-        dmaReduceOp->getLoc(), *srcMemref, *dstMemref,
+        dmaReduceOp->getLoc(), llvm::cast<MemRefType>(*resultMemrefType),
+        *srcMemref, *dstMemref,
         dmaReduceOp.getOffsets(),
         dmaReduceOp.getSizes(),
         dmaReduceOp.getStrides(),
@@ -205,7 +218,7 @@ struct DMAReduceOpInterface
         dmaReduceOp.getStaticSizes(),
         dmaReduceOp.getStaticStrides());
 
-    rewriter.eraseOp(op);
+    replaceOpWithBufferizedValues(rewriter, op, newOp.getResult(0));
     return success();
   }
 };

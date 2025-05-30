@@ -350,6 +350,7 @@ scf::ForallOp mergeInnerScfForAll(
       dispatchIndexOpFoldResults(sizes, dynamicSizes,
                                  staticSizes);
       auto result = rewriter.create<kestrel::DMAReduceOp>(forallOp.getLoc(),
+                                                          reduceOp.getResultTypes()[0],
                                                           gemmOutput,
                                                           dst,
                                                           dynamicOffsets,
@@ -359,13 +360,14 @@ scf::ForallOp mergeInnerScfForAll(
                                                       staticStrides,
                                                       staticSizes);
 
-      reduceOp.getResult(0).replaceAllUsesWith(outputForReduce);
+      reduceOp.getResult(0).replaceAllUsesWith(result.getResult(0));
       continue;
     }
     else {
       if (llvm::isa<tensor::ExtractSliceOp>(op) && op.getOperand(0) == newOut) {
         outputForReduce = op.getResult(0);
       }
+
       rewriter.moveOpBefore(&op, yieldOp.getOperation());
     }
   }
