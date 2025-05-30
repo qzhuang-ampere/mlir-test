@@ -40,6 +40,40 @@ module {
       transform.yield
     }
 
+    transform.named_sequence @__transform_step2(%arg0: !transform.any_op {transform.readonly}) {
+      %csimd_width = transform.param.constant 64 : i64 -> !transform.param<i64>
+      %ct_row = transform.param.constant 64 : i64 -> !transform.param<i64>
+      %ct_col = transform.param.constant 2048 : i64 -> !transform.param<i64>
+
+      %for_alls = transform.structured.match ops{["scf.forall"]} in %arg0 : (!transform.any_op) -> !transform.any_op
+      transform.foreach  %for_alls : !transform.any_op {
+      ^bb1(%for_all : !transform.any_op):
+        %gpuLaunch = transform.gpu.map_forall_to_blocks %for_all { generate_gpu_launch } : (!transform.any_op) -> !transform.any_op
+      }
+      transform.yield
+    }
+
+    transform.named_sequence @match_func(%arg0: !transform.any_op {transform.readonly}) -> !transform.any_op {
+      transform.match.operation_name %arg0 ["func.func"] : !transform.any_op
+      transform.yield %arg0 : !transform.any_op
+    }
+
+    transform.named_sequence @kestrel_func(%arg0: !transform.any_op {transform.consumed}) {
+      %1 = transform.apply_registered_pass "canonicalize" to %arg0
+      : (!transform.any_op) -> !transform.any_op
+      %2 = transform.apply_registered_pass "cse" to %1
+      : (!transform.any_op) -> !transform.any_op
+      %3 = transform.apply_registered_pass "kestrel-convert-linalg-to-aice" to %2 {options = "load-only=0"}
+      : (!transform.any_op) -> !transform.any_op
+      transform.yield
+    }
+
+    transform.named_sequence @kestrel_func_2(%arg0: !transform.any_op {transform.consumed}) {
+      %1 = transform.apply_registered_pass "kestrel-post-process-after-bufferization" to %arg0 {options = "load-only=0"}
+      : (!transform.any_op) -> !transform.any_op
+      transform.yield
+    }
+
     transform.named_sequence @__transform_main(%arg1: !transform.any_op {transform.consumed}) {
       %0 = transform.structured.match ops{["scf.forall"]} in %arg1 : (!transform.any_op) -> !transform.any_op
 
@@ -48,8 +82,21 @@ module {
         transform.include @__merge_scf_forall failures(suppress) (%each) : (!transform.any_op) -> ()
       }
 
+      // %result = transform.foreach_match in %arg1
+      //             @match_func -> @kestrel_func
+      //             : (!transform.any_op) -> !transform.any_op
+
+      transform.print %arg1 : !transform.any_op
       %1 = transform.bufferization.one_shot_bufferize %arg1 { bufferize_function_boundaries = true }
            : (!transform.any_op) -> !transform.any_op
+      transform.print %1 : !transform.any_op
+
+
+      // %2 = transform.foreach_match in %1
+      //             @match_func -> @kestrel_func_2
+      //             : (!transform.any_op) -> !transform.any_op
+
+      // transform.include @__transform_step2 failures(propagate) (%2) : (!transform.any_op) -> ()
 
       transform.yield
     }

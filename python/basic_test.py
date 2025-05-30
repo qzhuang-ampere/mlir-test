@@ -27,6 +27,29 @@ def run(f):
     print()
 
 @run
+def test_basic_matmul2():
+    class Basic(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.matWQ = torch.randn(16384, 16384)
+
+        def forward(self, x):
+            self.matW = torch.randn(16384, 16384)
+            self.bias = torch.randn(1, 16384)
+            out = torch.relu(torch.matmul(x, self.matW) + self.bias)
+            return out
+
+    model = Basic().cpu()
+    model = torch.fx.symbolic_trace(model)
+    m = fx.export_and_import(
+        model,
+        torch.randn(128, 16384),
+        output_type=OutputType.LINALG_ON_TENSORS,
+        enable_graph_printing=True, enable_ir_printing=True)
+    print(m)
+    exit(0)
+
+@run
 def test_basic_matmul():
     class Basic(nn.Module):
         def __init__(self):
